@@ -1,0 +1,122 @@
+{
+  "iteration": 0,
+  "timestamp": "2026-05-25T15:48:42.787764",
+  "score": 0.0,
+  "eval": {
+    "direction_accuracy": 0.0,
+    "total": 12,
+    "correct": 0,
+    "results": [
+      {
+        "id": "bjdc-009",
+        "match": "桑德兰 vs 切尔西",
+        "expected": "胜",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-014",
+        "match": "AC米兰 vs 卡利亚里",
+        "expected": "负",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-008",
+        "match": "利物浦 vs 布伦特",
+        "expected": "平",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-007",
+        "match": "水晶宫 vs 阿森纳",
+        "expected": "负",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-015",
+        "match": "都灵 vs 尤文",
+        "expected": "胜",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-013",
+        "match": "克雷莫纳 vs 科莫",
+        "expected": "负",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-006",
+        "match": "伯恩利 vs 狼队",
+        "expected": "平",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-003",
+        "match": "河床 vs 桑托斯",
+        "expected": "让负",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-010",
+        "match": "那不勒斯 vs 乌迪内斯",
+        "expected": "平",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-004",
+        "match": "耶尔文佩 vs MP米凯利",
+        "expected": "让负",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-005",
+        "match": "塞伊奈约基学院 vs 哈卡",
+        "expected": "平",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      },
+      {
+        "id": "bjdc-012",
+        "match": "莱切 vs 热那亚",
+        "expected": "胜",
+        "actual": null,
+        "direction_correct": false,
+        "score_band_correct": false,
+        "signal_match": false
+      }
+    ]
+  },
+  "layer": 0,
+  "mutation": "baseline"
+}

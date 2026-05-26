@@ -1,0 +1,9 @@
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore curator backups
+.curator_backups/
+
+# Ignore hub cache
+.hub/

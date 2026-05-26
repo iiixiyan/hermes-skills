@@ -1,0 +1,55 @@
+{
+  "name": "bjdc-prediction evolver",
+  "version": "1.0",
+  "max_iterations": 19,
+  "holdout_ratio": 0.2,
+  "layers": {
+    "1": {
+      "name": "触发条件/阈值/参数",
+      "cost": "cheap",
+      "scope": [
+        "信号触发阈值（如一致升主胜≥15家）",
+        "水位区间定义",
+        "让球盘定位基准表",
+        "联赛熔断阈值",
+        "权重系数"
+      ]
+    },
+    "2": {
+      "name": "分析流程/SKILL.md正文",
+      "cost": "medium",
+      "scope": [
+        "八步法描述优化",
+        "分析逻辑修正",
+        "输出格式调整",
+        "示例数据更新"
+      ]
+    },
+    "3": {
+      "name": "辅助脚本/references",
+      "cost": "expensive",
+      "scope": [
+        "脚本bug修复",
+        "参考资料更新",
+        "模板文件",
+        "GT manifest扩展"
+      ]
+    }
+  },
+  "evaluation": {
+    "direction_weight": 0.6,
+    "score_band_weight": 0.2,
+    "signal_match_weight": 0.1,
+    "reasoning_weight": 0.1
+  },
+  "gate": {
+    "min_improvement": 0.01,
+    "max_regression": 0.0,
+    "holdout_check": true
+  },
+  "trace": {
+    "save_full": true,
+    "save_intermediate": true,
+    "compress_after": 50
+  }
+}
