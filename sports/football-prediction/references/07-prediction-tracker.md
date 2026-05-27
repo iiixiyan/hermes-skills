@@ -124,7 +124,16 @@ python3 review-score-analyzer.py --date 2026-05-23 --skip-html
 - `predictions.db` 位置：`/root/.hermes/skills/sports/football-prediction/predictions.db`
 - 复盘脚本会回退读取 cron 输出文件（存于 `~/.hermes/cron/output/<job_id>/`）当 DB 无数据时
 
-⚠️ **复盘前必须验证预测来源**：执行复盘前检查DB中预测的 `created_at` 时间戳。若全部预测同一秒生成且cron任务会话记录显示被截断（"对话截断"），则该批预测可能为未完成版本——立即向用户确认，不可直接用不完整预测做复盘。
+⚠️ **复盘前必须验证预测来源**：执行复盘前检查DB中预测的 `created_at` 时间戳。若全部预测同一秒生成且cron任务会话记录显示被截断（「对话截断」），则该批预测可能为未完成版本——立即向用户确认，不可直接用不完整预测做复盘。
+
+⚠️ **DB保存验证必备**：2026-05-26发现cron任务输出「Tracker DB已更新（7条记录）」但实际DB中无对应日期数据。预测写入后必须验证：
+```python
+# 写入后立即验证
+cursor.execute("SELECT COUNT(*) FROM predictions WHERE date = ?", (today,))
+saved = cursor.fetchone()[0]
+assert saved == expected_count, f"DB保存失败！应{expected_count}条，实{saved}条"
+```
+**原因**：`execute_code` 环境可能成功执行Python代码但DB连接在环境关闭后丢失写操作（sqlite的auto-commit模式不保证跨进程可见性）。解决方案：每次写入后必须 `conn.commit()` + 验证读取确认。**只读不验证=没保存。**
 
 ### 何时使用
 

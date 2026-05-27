@@ -1,10 +1,10 @@
 ---
 name: football-prediction
-description: "竞彩足球比分预测与战术分析。双轨比分预测（正常+异常），含泊松分布λ加权、xG模型、伤停影响、战意评估、冷门因子挖掘、文彩52交叉验证。适用于竞彩/足彩/比分预测/赛前前瞻场景。"
-version: 4.2.0
+description: "竞彩足球比分预测与战术分析。双轨比分预测（正常+异常），含泊松分布λ加权、xG模型、伤停影响、战意评估、冷门因子挖掘、文彩52交叉验证、让球高赔奖金提升策略。适用于竞彩/足彩/比分预测/赛前前瞻/串关策略场景。"
+|version: 4.4.0
 ---
 
-# 竞彩足球比分预测（v4.2.0 重构版）
+# 竞彩足球比分预测（v4.4.0 重构版）
 
 > 采用 Progressive Disclosure 架构。本文件仅放触发条件、核心流程、引用索引。详细方法论见 references/ 目录。
 
@@ -52,22 +52,24 @@ version: 4.2.0
 - **文彩52强制交叉验证** → 见 references/ 已有文件
 
 ### 第3步：因子检查
-遍历因子速查表（13因子），逐因子核对触发状态。详见 `references/01-factor-table.md`。
+遍历因子速查表（14因子），逐因子核对触发状态。详见 `references/01-factor-table.md`。
 
 | 优先级 | 因子 | 触发条件（简） |
 |:--|:--|:--|
 | **P0** | 4b 一致升赔 | ≥20升/≤2降 → 异常比分须含反方向 |
 | **P0** | 2 赛季末战意 | 末5轮+战意差 → 异常权重+2级 |
+| **P0** | 14 弱队客场λ系数 | 客排名>主5名 或 跨级杯赛 → λ客×0.70~0.80 |
 | **P1** | 12 一致降赔 | ≥20降/≤2升+基本面异常 → 造热预警 |
-| **P1** | 13 双边分歧 | 一端≥20升+另端≥20降 → 平局+35% |
+| **P1** | 13 双边分歧 | 一端≥20升+另端≥20降 → 平局+35%（⚠️解放者杯降级） |
 | **P1** | 4b-EXT 边界升赔 | ≥20升/≤5降+幅度≥3% → 标记 |
 
 ### 第4步：模型计算
 ```
 4.1 λ_stats  = (近3×0.4 + 近6×0.3 + 赛季×0.3) × 主客场系数
-4.2 λ_market = 网格校准（argmin|P_model - P_market|²）
-4.3 λ_transitive = 共同对手桥接法 → references/05-bridge-method.md
-4.4 λ_final = α×λ_market + β×λ_stats + γ×λ_transitive
+4.2 弱队客场λ修正（因子14+跨级系数）→ references/analysis-framework.md §4.2a
+4.3 λ_market = 网格校准（argmin|P_model - P_market|²）
+4.4 λ_transitive = 共同对手桥接法 → references/05-bridge-method.md
+4.5 λ_final = α×λ_market + β×λ_stats + γ×λ_transitive
 ```
 
 ### 第5步：异常比分路径判定
@@ -86,8 +88,12 @@ version: 4.2.0
 💰 双选：[比分A] / [比分B]  ➡ 偏重[比分A]
 ```
 
-### 第7步：串关筛选（按需触发）
-当用户要求串关/合买/稳单时。详见 `references/07-prediction-tracker.md`（凯利配比部分）。
+### 第7步：串关筛选（按需触发，cron任务必输）
+当用户要求串关/合买/稳单时。详见：
+- `references/07-prediction-tracker.md` — 凯利配比、投注额建议
+- `references/sp-odds-alignment.md` — 场次筛选、双选有效赔率、输出格式
+- `references/sp-odds-alignment.md §3.5` — **让球高赔奖金提升策略**（当用户指定奖金目标时）
+- `references/06-coldsearch-betting.md` — 博单比分选择
 
 ---
 
@@ -95,7 +101,7 @@ version: 4.2.0
 
 | 编号 | 文件 | 内容 | 引用时机 |
 |:---:|:-----|:-----|:-------:|
-| 01 | `references/01-factor-table.md` | 13因子速查表（含完整案例库、失效条件、验证记录） | Step 3 |
+| 01 | `references/01-factor-table.md` | 14因子速查表（含完整案例库、失效条件、验证记录、跨级系数） | Step 3 |
 | 02 | `references/02-abnormal-score-paths.md` | 异常比分双路径（A1-A4爆冷/B1-B4大比分）+ 输出铁规 | Step 5 |
 | 03 | `references/03-review-experience.md` | 复盘核心铁律、复盘方法论、自动复盘脚本使用 | 赛后复盘 |
 | 04 | `references/04-league-and-models.md` | 联赛基因参考（五大/亚洲/北欧/南美/洲际）、多模型融合、免费数据源 | Step 2+4 |
@@ -108,6 +114,7 @@ version: 4.2.0
 | — | `references/data-source-mapping.md` | 数据源映射表 | Step 2 |
 | — | `references/league-review-templates.md` | 联赛复盘模板 | 复盘 |
 | — | `references/ouzi-signal-cases-20260524.md` | 欧指信号案例库（27场完整分析） | Step 3验证 |
+| — | `references/review-findings-20260526.md` | 2026-05-25/26逐场复盘数据（精确命中率、逐场对照、联赛发现） | 复盘 |
 | — | `references/pro-model-methods.md` | 专业模型方法 | 进阶分析 |
 | — | `references/wencai52-reference.md` | 文彩52交叉验证参考 | Step 2 |
 | — | `references/sp-odds-alignment.md` | SP赔率对齐参考 | 串关 |
@@ -140,6 +147,8 @@ version: 4.2.0
 
 | 版本 | 日期 | 变更 |
 |:----|:----|:-----|
+| v4.4.0 | 2026-05-27 | **新增因子14弱队客场λ系数**（客排名>主5名→λ客×0.7~0.8）；**新增跨级杯赛进球缩小系数**（跨级对决λ低×0.65~0.75）；**因子13解放者杯降级**（南美赛事主场优势过大致信号失真）；λ模型新增4.2a弱队客场λ修正步骤 |
+| v4.3.0 | 2026-05-26 | 新增让球高赔奖金提升策略（sp-odds-alignment.md §3.5）；串关步骤引用了扩展 |
 | v4.2.0 | 2026-05-25 | 文彩52强制集成；双选并列+偏重格式；Progressive Disclosure架构重组 |
 | v4.1.0 | 2026-05-24 | 因子4b/12/13验证更新；案例库新增 |
 | v4.0.0 | 2026-05-20 | λ计算重构；因子速查表；异常比分双路径 |

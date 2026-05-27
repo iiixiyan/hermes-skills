@@ -138,6 +138,25 @@ curl -s -X POST \
   -d '{"name": "my-new-project", "private": false}'
 ```
 
+### ⚠️ Pitfall: Embedded `.git` directories in source directories
+
+When pushing an existing directory that contains **nested git repositories** (e.g. syncing `~/.hermes/skills/` where individual skill dirs were created by `skill_manage` and may have their own `.git/`), `git add -A` will silently register them as **git submodules (gitlinks, mode 160000)** instead of tracking their contents. The outer repo will contain only a pointer, not the actual files.
+
+**Fix before `git add`:**
+
+```bash
+find /path/to/source -name ".git" -type d | while read d; do
+  rm -rf "$d"
+  echo "Removed embedded .git: $d"
+done
+git add -A
+```
+
+Verify no submodule entries snuck in:
+```bash
+git ls-files --stage | grep ^160000  # Should return nothing
+```
+
 ### From a Template
 
 **With gh:**

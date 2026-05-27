@@ -167,7 +167,7 @@ hermes sessions stats       Session store statistics
 
 ### Cron Jobs
 
-```
+```bash
 hermes cron list            List jobs (--all for disabled)
 hermes cron create SCHED    Create: '30m', 'every 2h', '0 9 * * *'
 hermes cron edit ID         Edit schedule, prompt, delivery
@@ -176,6 +176,13 @@ hermes cron run ID          Trigger on next tick
 hermes cron remove ID       Delete a job
 hermes cron status          Scheduler status
 ```
+
+**Cron Prompt Design Principles:**
+- **Keep prompts under ~700 chars.** Longer prompts that load multiple skill files via `skill_view()` cause agent sessions to stall — the agent exhausts its context or times out before reaching the actual data-collection step. The prompt should state WHAT to do and the output FORMAT; the skill files carry the HOW.
+- **Let skills carry the detail.** Reference skill files via `skill_view('name')` — don't inline their content. A cron prompt that says "Load skill X → collect data → run analysis → output per template" is more reliable than one that copies the template inline.
+- **Structured output templates.** Include a concise output format block in the prompt so the agent knows what shape the delivery message should take. Keep it short — just the section headers and placeholders.
+- **One-shot, not interactive.** Cron sessions run autonomously with no user to ask questions. The prompt must be self-contained: list URLs, skill names, specific tool calls, and fallback behavior upfront.
+- **Test with `hermes cron run ID`** after creating or editing, especially for data-collection tasks that use the browser tool. A dry run reveals context stalls, missing skill references, and rate-limit issues before the scheduled time.
 
 ### Webhooks
 

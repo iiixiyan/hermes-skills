@@ -168,6 +168,7 @@ description: "北单（北京单场）让球胜平负综合预测体系。双模
 | 11 | `references/11-review-insights.md` | 复盘优化经验（实战胜率统计、联赛规律、赛季末规律） | Step 10 |
 | 12 | `references/12-goal-prediction.md` | 进球数预测完整方法（四步流程+五因子修正+联赛基因表+一致性检查） | Step 8 |
 | — | `references/data-collection-workflow.md` | 数据采集逐场操作步骤、Tab切换失败处理、效率优化 | Step 1 |
+| — | `references/cron-prompt-template.md` | Cron Job Prompt 精简模板（500-700字），含格式模板+设计原则 | 定时任务 |
 | — | `references/case-studies-2026-05-25.md` | 实战案例库（北单182-184逐场分析） | 复盘参考 |
 | — | `references/bjdc-0ball-draw-stack.md` | 0球盘特殊规律 | Step 6 |
 | — | `references/research-papers.md` | ArXiv 2024-2026前沿论文摘要 | 模型升级参考 |
@@ -205,7 +206,7 @@ description: "北单（北京单场）让球胜平负综合预测体系。双模
 
 | 版本 | 日期 | 变更 |
 |:----|:----|:-----|
-| v4.4.0 | 2026-05-26 | 新增进球数预测（12-goal-prediction.md）；输出格式重构；Progressive Disclosure架构重组 |
+| v4.4.0 | 2026-05-26 | 新增进球数预测（12-goal-prediction.md）；输出格式重构；Progressive Disclosure架构重组；芬兰杯/法国杯模板（05-league-templates.md） |
 | v4.3.4 | 2026-05-26 | 分歧输出从"主推←辅防"改为"并列+偏重" |
 | v4.3.3 | 2026-05-25 | 偏重8级优先级；亚指降盘分级；Edge范式升级 |
 | v4.3.2 | 2026-05-25 | 误区6/7新增；八维缺数据处理 |
