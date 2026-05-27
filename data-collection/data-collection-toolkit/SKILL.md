@@ -67,6 +67,8 @@ related_skills:
 | YouTube视频/字幕 | Agent-Reach (yt-dlp) | 或 autocli youtube |
 | GitHub仓库/代码 | Agent-Reach (gh CLI) | 或 autocli gh |
 | RSS订阅 | Agent-Reach (feedparser) | 或 autocli read |
+| 搜狗搜索 | curl | 中文搜索首选，bot检测弱于百度 |
+| 搜狗微信搜索 | curl | 查微信公众号文章和账号 |
 | 任意网页正文 | autocli read <url> | 基于Mozilla Readability |
 | 需要登录的平台（微博/小红书等） | autocli（浏览器模式） | 需Chrome+扩展 |
 | 特殊交互网站 | bb-browser | 最后兜底 |
@@ -99,7 +101,13 @@ autocli read <url>                # 任意网页正文提取
 - arXiv (arxiv.org) ❌
 - Wikipedia (wikipedia.org) ❌
 
-**替代方案**：搜索用百度（baidu.com）、新浪（sina.com.cn）、QQ（qq.com）等国内站点，或直接采集已知可达平台（59itou、知乎、微博等）。工具链四件套中的 2️⃣-4️⃣ 均不依赖境外搜索引擎。
+**替代方案**：
+1. **首选 → 搜狗搜索(sogou.com)**：国内搜索引擎，bot检测弱于百度，可靠度高。搜狗微信搜索(weixin.sogou.com)可查微信公众号文章。
+2. **备用 → 百度(baidu.com)**：可能触发"百度安全验证"反爬，超时即fallback到搜狗。
+3. **其他 → 新浪(sina.com.cn)、QQ(qq.com)**等国内站点。
+4. **足球数据** → 直接采集已知可达平台（59itou、知乎、微博等）。
+
+工具链四件套中的 2️⃣-4️⃣ 均不依赖境外搜索引擎。
 
 ### 中国服务器网络环境
 
