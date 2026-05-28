@@ -826,6 +826,28 @@ and logs — avoids shell-escaping backslashes in bash.
 2. `hermes skills config` — check platform enablement
 3. Load explicitly: `/skill name` or `hermes -s name`
 
+### Cron job delivery failures
+
+A job can show `last_status: "ok"` but have a non-null `last_delivery_error` — typically WeChat rate limiting or a platform transient. The job itself likely ran fine and its side effects (email sends, git pushes, file writes) succeeded.
+
+**Diagnosis checklist:**
+1. `hermes cron list` — check `last_status`, `last_delivery_error`, `last_run_at` for the job
+2. Check the cron output directory for the job's prompt transcript:
+   ```bash
+   ls ~/.hermes/cron/output/<job_id>/
+   ```
+3. If the job pushes to an external target (Gitee, email), verify directly there — the output may have arrived despite the delivery failure
+4. Check gateway logs: `grep -i "failed to send\|rate limited" ~/.hermes/logs/gateway.log | tail -20`
+
+**Recovery options:**
+- **Re-run the job** — `cronjob run <job_id>` schedules an immediate execution on the next scheduler tick. Delivery will retry.
+- **Manually deliver the content** — if you can see the output (from Gitee, email history, or the job's prompt), send it directly to the user via `send_message` or similar.
+- **Invoke side-effect scripts independently** — if the cron prompt calls a standalone script (e.g. `od_daily_push.py`), run it directly from `execute_code` to re-trigger that specific action without running the full GA session.
+
+**Prevention:**
+- WeChat rate limits are typically transient (resolves within minutes). Re-running the job after a short delay usually succeeds.
+- For critical cron deliveries, consider dual-channel output (e.g. push to Gitee + email + WeChat) so no single delivery failure loses the content.
+
 ### Gateway issues
 Check logs first:
 ```bash

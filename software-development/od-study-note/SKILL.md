@@ -112,7 +112,17 @@ week-03-linkedlist-tree/          # 第3周：栈·队列·链表（注意目录
   ...
 ```
 
-⚠️ **目录名注意**：源仓库第3周的目录是 `week-03-linkedlist-tree`，而非 `week-03-stack-queue-linkedlist`。学习仓库中 `week-03-stack-queue-linkedlist` 是旧版遗留目录，Day16之后的新文档应放入 `week-03-linkedlist-tree`。搜索文件时使用 `rglob` 通配匹配，不要硬编码周目录名：
+⚠️ **目录名注意**：源仓库第3周的目录是 `week-03-linkedlist-tree`，但学习仓库（huawei-od-learning）中第3周的目标目录是 **`week-03-stack-queue-linkedlist`** 而非 `week-03-linkedlist-tree`。学习仓库没有 `week-03-linkedlist-tree` 目录，所有第3周的学习文档（Day15-21）都统一放入 `week-03-stack-queue-linkedlist`。
+
+```python
+# ✅ 正确：学习文档写入 week-03-stack-queue-linkedlist（与学习仓库实际目录一致）
+WEEK_DIR = "week-03-stack-queue-linkedlist"
+
+# ❌ 错误：学习仓库中不存在 week-03-linkedlist-tree 目录
+# WEEK_DIR = "week-03-linkedlist-tree"  # 这是源仓库的目录，不是学习仓库的
+```
+
+搜索源仓库文件时使用 `rglob` 通配匹配，不要硬编码周目录名：
 
 ```python
 from pathlib import Path
@@ -368,11 +378,46 @@ README.md
 
 ### 添加方式（两种场景）
 
-**场景A：README中有 `🚧 待更新` 占位行**
+**场景A：README中有 `🚧 待更新` 占位行**…
 搜索 `🚧 待更新` 标记所在行，整行替换为实际链接。
 
-**场景B：README按顺序增长（无占位行）—— 日更场景下的常见情况**
+**场景B：README按顺序增长（无占位行）—— 日更场景下的常见情况**…
 在最后一个已存在的Day行之后插入新行。推荐以下两种方法：
+
+### 🔍 README 链接验证（重要！）
+
+每次追加新行后，**验证所有指向当前周目录的链接**是否真实存在：
+
+```python
+import os
+LEARN_DIR = "/tmp/huawei-od-learning-push"
+with open(f"{LEARN_DIR}/README.md") as f:
+    for line in f:
+        if '查看]' in line:
+            start = line.find('(')
+            end = line.find(')', start)
+            if start > 0 and end > start:
+                path = line[start+1:end]
+                full = os.path.join(LEARN_DIR, path)
+                dir_path = os.path.dirname(full)
+                if not os.path.exists(dir_path):
+                    print(f"⚠️  BROKEN LINK: {path} — directory {dir_path} does not exist!")
+```
+
+如果发现旧会话遗留的**错误链接**（如指向 `week-03-linkedlist-tree/` 但实际目录是 `week-03-stack-queue-linkedlist/`），用 Python 替换修复：
+
+```python
+with open(README_PATH) as f:
+    content = f.read()
+content = content.replace(
+    "week-03-linkedlist-tree/Day16-栈进阶-从零到精通.md",
+    "week-03-stack-queue-linkedlist/Day16-栈进阶-从零到精通.md"
+)
+with open(README_PATH, 'w') as f:
+    f.write(content)
+```
+
+修复后在 commit message 中注明 `(fixed broken README link)`。
 
 #### 方法1（推荐）：用 Python 通过 `execute_code` 重写 README
 
@@ -440,6 +485,31 @@ terminal工具存在bug（所有命令报错"cd: y: No such file or directory" e
 - **多余的前导 pipe**：`|| Day 9 | ...` → 应该为 `| Day 9 | ...`（多了个 `|` 会破坏整行解析）
 - **多余的空格或缺失分隔符**：确保表格每行的列数一致
 - 编辑后建议**肉眼预览**表格对齐情况，或检查文档是否排版异常
+
+### ❌ README 中存在指向不存在目录的链接（来自旧会话）
+
+历史会话生成的 README 行可能指向了错误的周目录。常见问题：
+- 第3周：有些旧行指向 `week-03-linkedlist-tree/`（源仓库目录名），但学习仓库实际使用 `week-03-stack-queue-linkedlist/`
+- 后果：用户在首页点击链接会 404
+
+**修复方法**：每次更新 README 时，顺手检查所有指向当前周目录的行，确保路径与仓库实际目录一致。可以快速扫描：
+
+```python
+import os
+LEARN_DIR = "/tmp/huawei-od-learning-push"
+# 检查所有 README 中的链接是否指向真实存在的目录
+with open(f"{LEARN_DIR}/README.md") as f:
+    for line in f:
+        if '查看]' in line:
+            # 提取 (week-XX/...) 路径
+            start = line.find('(')
+            end = line.find(')', start)
+            if start > 0 and end > start:
+                path = line[start+1:end]
+                full = os.path.join(LEARN_DIR, path)
+                if not os.path.exists(os.path.dirname(full)):
+                    print(f"⚠️  链接指向不存在的目录: {path}")
+```
 
 ### ❌ 文件名不统一
 使用 `DayN-主题-副标题.md` 格式，全部用中文字符，不要混用英文字母和中文数字。
