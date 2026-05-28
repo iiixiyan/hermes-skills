@@ -207,13 +207,16 @@ class PredictionTracker:
                 away_goals INTEGER,
                 -- 命中判定（-1=待更新, 0=未中, 1=方向命中, 2=精确比分命中, 3=异常比分命中）
                 hit_status INTEGER DEFAULT -1,
-                -- 异常比分是否命中
-                abnormal_hit INTEGER DEFAULT -1,
-                notes TEXT,
                 created_at TEXT DEFAULT (datetime('now', 'localtime'))
             )
         ''')
-        
+
+        # 索引
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pred_date ON predictions(date)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pred_league ON predictions(league)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pred_hit ON predictions(hit_status)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_pred_created ON predictions(created_at)')
+
         # 每日汇总表
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS daily_summary (
@@ -227,7 +230,8 @@ class PredictionTracker:
                 created_at TEXT DEFAULT (datetime('now', 'localtime'))
             )
         ''')
-        
+
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_summary(date)')
         conn.commit()
         conn.close()
     
