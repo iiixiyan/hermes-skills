@@ -152,6 +152,49 @@
 👉 触发：[具体触发条件，≤30字]
 ```
 
+### ⬆️ H2H历史常见比分参考（2026-05-28新增）
+
+H2H历史交锋数据是推测异常比分的重要补充参考。当爆冷/大比分路径的模板比分与H2H常见比分高度重合时，可信度显著提升。
+
+**H2H数据来源：** 详情页战绩Tab中"两队交锋"段落，从 `document.body.innerText` 中提取历史比分。
+
+```python
+# H2H常见比分提取
+import re
+from collections import Counter
+
+def extract_h2h_common_scores(inner_text: str) -> list[str]:
+    idx = inner_text.find("两队交锋")
+    if idx < 0:
+        return []
+    h2h_section = inner_text[idx:idx+500]
+    scores = re.findall(r'\b(\d+)-(\d+)\b', h2h_section)
+    score_counter = Counter()
+    for (h, a) in scores:
+        if int(h) + int(a) <= 7:
+            score_counter[f"{h}-{a}"] += 1
+    return [s for s, _ in score_counter.most_common(3)]
+```
+
+**H2H应用规则：**
+1. **优先级**：H2H高频比分（出现≥2次）> 模板默认比分 > H2H低频比分
+2. **H2H确认**：异常比分推荐在H2H历史中出现过 → 标注 `✅ H2H历史印证`
+3. **H2H补充**：H2H高频比分(top2)不在异常模板中，且类型不矛盾 → 额外列出一个 `📖 历史常见`
+4. **H2H全覆盖**：H2H最高频2个比分与异常模板完全匹配 → 标记 `🎯 H2H高度吻合`
+5. **无数据**：无H2H数据或出现0次 → 正常输出模板比分，不标注
+
+**输出示例：**
+```
+🎯 异常比分：0-1/1-1 🏷️ A1·赔率反转 ✅ H2H历史印证
+```
+或（有H2H补充比分时）：
+```
+🎯 异常比分：0-1/1-1/📖0-0 🏷️ A1·赔率反转 ✅ H2H历史印证
+```
+
+**H2H补充比分类型约束：**
+- ❌ 禁止H2H补充比分与异常类型矛盾（A型爆冷不能加4-4、B型大比分不能加0-0）
+
 **禁止项：**
 - ❌ 禁止爆冷和大比分混在同一组（不能1-0和4-1放一起）
 - ❌ 禁止不标类型标签

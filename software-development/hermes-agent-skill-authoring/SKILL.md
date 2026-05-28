@@ -1,7 +1,7 @@
 ---
 name: hermes-agent-skill-authoring
 description: "Author in-repo SKILL.md: frontmatter, validator, structure."
-version: 1.1.0
+version: 1.2.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -318,6 +318,20 @@ If the skill has linked reference files (`skill_view` shows `linked_files`), upd
 - Maintenance easier: edit a single reference file instead of finding the right spot in a 2000-line monolith
 
 **Key lesson:** The decision tree (workflow steps + branch logic) stays in the main file. Everything else — rules, examples, tables, calculations — goes to references. This is the opposite of instinct (which is to put everything inline "so the model can see it").
+
+### Skill Audit Framework (5 Dimensions)
+
+When a user requests a skill review or optimization, use this structured framework to identify improvement areas, prioritized by impact:
+
+| Priority | Dimension | Audit Questions |
+|:--------:|:----------|:---------------|
+| **P0** | **架构 — Architecture** | ① 分析链路过长？能否压缩到5步以内？ ② 核心公式阈值在references跳转过多？应内联到SKILL.md ③ 硬编码单一数据源？需fallback容灾 |
+| **P0** | **执行 — Execution** | ① AI推理惯性违反规则（如比分反推）？增加推导路径声明强制自我校验 ② 数据可能过期？增加时间戳+自动警告 ③ 缺少可量化的校验机制？ |
+| **P1** | **方法论 — Methodology** | ① 固定权重不适配所有场景？需动态化 ② 阈值过于刚性？下沉到子类/联赛模板 ③ 缺少交叉验证/协同校验？ |
+| **P1** | **输出 — Output** | ① 每项预测是否附带可验证的推导依据？ ② 是否有风险分级/置信度标注？ ③ 是否有"禁止项"明确列出常见错误？ |
+| **P2** | **维护 — Maintenance** | ① 复盘闭环依赖外部DB？简化为结构化文本 ② 跨技能信号可共享？ ③ 版本日志清晰记录变更动机？ |
+
+**Application Rule:** Run 架构→执行→方法论→输出→维护 in order. Within each, find the single highest-ROI change and apply it before moving on. Skip dimensions with no issues found.
 
 ### Optimization-Specific Pitfalls
 

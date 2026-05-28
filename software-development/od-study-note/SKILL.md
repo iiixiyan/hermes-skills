@@ -39,10 +39,18 @@ metadata:
 第1步：运行 od_daily_push.py 脚本 → 发送今日OD题目邮件到 suijiong@huawei.com
 第2步：确定今日Day编号（Day N = 今天 - 2026-05-11 + 1）
 第3步：从 /tmp/huawei-od-prep/ 读取当日 raw 课程内容
-第4步：生成「从零到精通」学习文档（LLM驱动）
+第4步：如果当日学习文档已存在，跳过生成（保持幂等），直接进入第5步
 第5步：推送到 https://gitee.com/iiixiyan/huawei-od-learning
 第6步：通过微信发送总结给用户
 ```
+
+### 🔍 每日cron自查清单
+
+每次cron运行时，除了生成/推送新文档，还应快速执行以下自查：
+
+1. **README链接验证**：扫描README中所有指向当前周目录的链接，确认目标目录存在。如果发现损坏链接（如指向 `week-03-linkedlist-tree/` 而实际目录为 `week-03-stack-queue-linkedlist/`），自动修复。
+2. **文档幂等性检查**：如果当日文档已存在且内容完整（>5KB），跳过生成，直接推送总结。
+3. **源仓库同步**：运行 `git pull` 检查源仓库是否有更新（如果原始课程内容被修正过，老文档可能需要重新生成）。
 
 ### 关键细节
 
@@ -524,4 +532,5 @@ with open(f"{LEARN_DIR}/README.md") as f:
 - 课程时间线：Day 1 = 2026-05-11，每天递增
 - Gitee API操作参考：`references/gitee-api-operations.md`（仓库创建/查询/修改/删除）
 - Gitee仓库配置：`references/gitee-config.md`（URL/Token/目录结构）
+- Gitee→GitHub同步：`references/gitee-github-sync.md`（镜像/双推方案）
 - 文档模板：`templates/study-note-template.md`
