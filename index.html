@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>华为OD备考学习笔记</title>
+<!-- marked.js for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* ===== CSS Variables (Dark study-friendly theme) ===== */
+:root {
+  --bg-primary: #0f0f1a;
+  --bg-secondary: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-hover: #1e2d4a;
+  --text-primary: #e0e6f0;
+  --text-secondary: #8899b0;
+  --text-muted: #5a6a80;
+  --accent: #4fc3f7;
+  --accent-dim: #0288d1;
+  --border: #2a2a4a;
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 0px;
+  --header-height: 56px;
+  --code-bg: #1a1a2e;
+  --code-border: #2a2a4a;
+  --tag-bg: rgba(79, 195, 247, 0.12);
+  --tag-color: #4fc3f7;
+  --overlay: rgba(0,0,0,0.5);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+/* ===== Header ===== */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 16px; z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.header .menu-btn {
+  background: none; border: none; color: var(--text-primary);
+  font-size: 24px; cursor: pointer; padding: 8px; margin-right: 12px;
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 8px;
+  transition: background 0.2s;
+}
+.header .menu-btn:hover { background: var(--bg-hover); }
+.header h1 {
+  font-size: 18px; font-weight: 600;
+  background: linear-gradient(135deg, var(--accent), #7c4dff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header .progress-badge {
+  margin-left: auto; font-size: 12px; color: var(--text-secondary);
+  background: var(--bg-card); padding: 4px 10px; border-radius: 12px;
+  border: 1px solid var(--border); white-space: nowrap;
+}
+
+/* ===== Sidebar Overlay (mobile) ===== */
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: var(--overlay);
+  z-index: 98;
+}
+.sidebar-overlay.active { display: block; }
+
+/* ===== Sidebar ===== */
+.sidebar {
+  position: fixed; top: var(--header-height); left: 0; bottom: 0;
+  width: var(--sidebar-width); background: var(--bg-secondary);
+  border-right: 1px solid var(--border); z-index: 99;
+  overflow-y: auto; transition: transform 0.3s ease;
+  padding-bottom: 20px;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.sidebar-section { margin: 12px 0; }
+.sidebar-section-title {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; font-size: 13px; font-weight: 600;
+  color: var(--accent); cursor: pointer; user-select: none;
+  transition: background 0.2s;
+}
+.sidebar-section-title:hover { background: var(--bg-hover); }
+.sidebar-section-title .arrow {
+  font-size: 10px; transition: transform 0.3s; color: var(--text-muted);
+}
+.sidebar-section-title .arrow.open { transform: rotate(90deg); }
+.sidebar-section-title .week-tag {
+  font-size: 10px; background: var(--tag-bg); color: var(--tag-color);
+  padding: 1px 6px; border-radius: 8px; margin-left: auto;
+}
+
+.sidebar-item {
+  display: block; padding: 8px 16px 8px 28px; font-size: 13px;
+  color: var(--text-secondary); cursor: pointer; text-decoration: none;
+  transition: all 0.2s; border-left: 3px solid transparent;
+  position: relative;
+}
+.sidebar-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.sidebar-item.active {
+  color: var(--accent); background: var(--tag-bg);
+  border-left-color: var(--accent);
+}
+.sidebar-item .day-num {
+  display: inline-block; width: 28px; font-size: 11px;
+  color: var(--text-muted); margin-right: 4px;
+}
+.sidebar-subsection { overflow: hidden; transition: max-height 0.3s ease; }
+
+/* ===== Main Content ===== */
+.main {
+  margin-left: var(--sidebar-width); margin-top: var(--header-height);
+  padding: 24px 32px; max-width: 900px; min-height: calc(100vh - var(--header-height));
+  transition: margin-left 0.3s ease;
+}
+
+/* ===== Markdown Content Styling ===== */
+.markdown-body {
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.markdown-body h1 {
+  font-size: 28px; font-weight: 700; margin: 32px 0 20px; padding-bottom: 12px;
+  border-bottom: 2px solid var(--border); color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+.markdown-body h2 {
+  font-size: 22px; font-weight: 600; margin: 28px 0 16px; color: var(--accent);
+}
+.markdown-body h3 {
+  font-size: 18px; font-weight: 600; margin: 24px 0 12px; color: var(--text-primary);
+}
+.markdown-body h4 {
+  font-size: 16px; font-weight: 600; margin: 20px 0 10px; color: var(--text-secondary);
+}
+.markdown-body p { margin: 12px 0; color: var(--text-primary); }
+.markdown-body strong { color: #fff; font-weight: 600; }
+.markdown-body em { color: var(--text-secondary); }
+.markdown-body a {
+  color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+.markdown-body a:hover { border-bottom-color: var(--accent); }
+
+/* Code blocks */
+.markdown-body pre {
+  background: var(--code-bg); border: 1px solid var(--code-border);
+  border-radius: 10px; padding: 16px 20px; overflow-x: auto;
+  margin: 16px 0; position: relative;
+}
+.markdown-body pre code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px; line-height: 1.7; color: #e6db74;
+  background: none; padding: 0;
+}
+.markdown-body code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 13px; background: var(--code-bg); padding: 2px 6px;
+  border-radius: 4px; color: #f8c555; border: 1px solid var(--code-border);
+}
+
+/* Tables */
+.markdown-body table {
+  width: 100%; border-collapse: collapse; margin: 16px 0;
+  font-size: 14px; border-radius: 10px; overflow: hidden;
+}
+.markdown-body th {
+  background: var(--bg-hover); color: var(--accent); font-weight: 600;
+  padding: 12px 14px; text-align: left; border: 1px solid var(--border);
+}
+.markdown-body td {
+  padding: 10px 14px; border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.markdown-body tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+.markdown-body tr:hover td { background: var(--bg-hover); }
+
+/* Blockquotes */
+.markdown-body blockquote {
+  border-left: 4px solid var(--accent-dim); padding: 12px 20px;
+  margin: 16px 0; background: var(--bg-card); border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+}
+
+/* Lists */
+.markdown-body ul, .markdown-body ol { padding-left: 24px; margin: 12px 0; }
+.markdown-body li { margin: 6px 0; }
+.markdown-body li::marker { color: var(--accent); }
+
+/* Horizontal rules */
+.markdown-body hr {
+  border: none; height: 1px; background: var(--border); margin: 32px 0;
+}
+
+/* Images */
+.markdown-body img { max-width: 100%; border-radius: 8px; margin: 16px 0; }
+
+/* Loading & Error states */
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  padding: 80px 20px; flex-direction: column; gap: 16px;
+}
+.loading .spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { color: var(--text-muted); font-size: 14px; }
+.error-page {
+  text-align: center; padding: 80px 20px;
+}
+.error-page .icon { font-size: 48px; margin-bottom: 16px; }
+.error-page h2 { color: var(--text-primary); margin-bottom: 8px; }
+.error-page p { color: var(--text-muted); font-size: 14px; }
+
+/* ===== Welcome page ===== */
+.welcome {
+  text-align: center; padding: 60px 20px; animation: fadeIn 0.5s ease;
+}
+.welcome .logo {
+  font-size: 64px; margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--accent), #7c4dff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.welcome h1 {
+  font-size: 28px; font-weight: 700; margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--accent), #7c4dff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.welcome .subtitle { color: var(--text-secondary); margin-bottom: 32px; font-size: 15px; }
+.welcome .stats {
+  display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-top: 32px;
+}
+.welcome .stat-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 28px; min-width: 120px;
+}
+.welcome .stat-card .num {
+  font-size: 28px; font-weight: 700; color: var(--accent);
+}
+.welcome .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+/* ===== README content in welcome ===== */
+.welcome-readme {
+  text-align: left; max-width: 800px; margin: 40px auto 0;
+  padding-top: 32px; border-top: 1px solid var(--border);
+}
+
+/* ===== Mobile responsive ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 85vw; max-width: 320px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main {
+    margin-left: 0; padding: 20px 16px;
+  }
+  .header h1 { font-size: 15px; }
+  .header .menu-btn { display: flex; }
+  .markdown-body h1 { font-size: 22px; }
+  .markdown-body h2 { font-size: 18px; }
+  .markdown-body h3 { font-size: 16px; }
+  .markdown-body pre { padding: 12px 14px; }
+  .markdown-body pre code { font-size: 12px; }
+  .markdown-body table { font-size: 12px; }
+  .markdown-body th, .markdown-body td { padding: 8px 10px; }
+  .welcome .stats { flex-direction: column; align-items: center; }
+  .welcome .stat-card { width: 100%; max-width: 200px; }
+}
+
+@media (min-width: 769px) {
+  .header .menu-btn { display: none; }
+}
+
+/* Progress bar per week */
+.week-progress { margin: 8px 16px; display: flex; align-items: center; gap: 8px; }
+.week-progress .bar-bg {
+  flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+}
+.week-progress .bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  border-radius: 2px; transition: width 0.5s ease;
+}
+.week-progress .label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+/* Copy button for code blocks */
+.copy-btn {
+  position: absolute; top: 8px; right: 8px;
+  background: var(--bg-hover); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 4px 10px; border-radius: 6px;
+  font-size: 11px; cursor: pointer; opacity: 0; transition: opacity 0.2s;
+}
+pre:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="header">
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <h1>📘 华为OD备考笔记</h1>
+  <span class="progress-badge">📅 Day 19 / 56</span>
+</header>
+
+<!-- ===== Sidebar Overlay (mobile) ===== -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ===== Sidebar ===== -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <a class="sidebar-item" style="margin-top:8px" onclick="loadReadme(); toggleSidebar();" id="nav-home">
+      <span>🏠 首页</span>
+    </a>
+  </div>
+
+  <!-- Week 1 -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title" onclick="toggleWeek(this)">
+      <span class="arrow open">▶</span>
+      第1周：数组与哈希表
+      <span class="week-tag">Day 1-7</span>
+    </div>
+    <div class="week-progress">
+      <div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div>
+      <span class="label">7/7 ✅</span>
+    </div>
+    <div class="sidebar-subsection" id="week1-content">
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day01-数组基础操作-从零到精通.md'); toggleSidebar();"><span class="day-num">Day01</span>数组基础操作</a>
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day02-数组进阶操作-从零到精通.md'); toggleSidebar();"><span class="day-num">Day02</span>数组进阶操作</a>
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day03-数组与数学-从零到精通.md'); toggleSidebar();"><span class="day-num">Day03</span>数组与数学</a>
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day04-哈希集合-从零到精通.md'); toggleSidebar();"><span class="day-num">Day04</span>哈希集合</a>
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day05-哈希映射-从零到精通.md'); toggleSidebar();"><span class="day-num">Day05</span>哈希映射</a>
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day06-前缀和区间-从零到精通.md'); toggleSidebar();"><span class="day-num">Day06</span>前缀和区间</a>
+      <a class="sidebar-item" onclick="loadDoc('week-01-array-hash/Day07-第一周复习-从零到精通.md'); toggleSidebar();"><span class="day-num">Day07</span>第一周复习 📝</a>
+    </div>
+  </div>
+
+  <!-- Week 2 -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title" onclick="toggleWeek(this)">
+      <span class="arrow open">▶</span>
+      第2周：字符串与双指针
+      <span class="week-tag">Day 8-14</span>
+    </div>
+    <div class="week-progress">
+      <div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div>
+      <span class="label">7/7 ✅</span>
+    </div>
+    <div class="sidebar-subsection" id="week2-content">
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day08-字符串基础-从零到精通.md'); toggleSidebar();"><span class="day-num">Day08</span>字符串基础</a>
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day09-双指针-从零到精通.md'); toggleSidebar();"><span class="day-num">Day09</span>双指针</a>
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day10-回文串与滑动窗口-从零到精通.md'); toggleSidebar();"><span class="day-num">Day10</span>回文串与滑动窗口</a>
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day11-滑动窗口进阶-从零到精通.md'); toggleSidebar();"><span class="day-num">Day11</span>滑动窗口进阶</a>
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day12-字符串综合-从零到精通.md'); toggleSidebar();"><span class="day-num">Day12</span>字符串综合</a>
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day13-字符串混合-从零到精通.md'); toggleSidebar();"><span class="day-num">Day13</span>字符串混合</a>
+      <a class="sidebar-item" onclick="loadDoc('week-02-string-pointer/Day14-字符串双指针周复习-从零到精通.md'); toggleSidebar();"><span class="day-num">Day14</span>第二周复习 📝</a>
+    </div>
+  </div>
+
+  <!-- Week 3 -->
+  <div class="sidebar-section">
+    <div class="sidebar-section-title" onclick="toggleWeek(this)">
+      <span class="arrow open">▶</span>
+      第3周：栈·队列·链表
+      <span class="week-tag">Day 15-21</span>
+    </div>
+    <div class="week-progress">
+      <div class="bar-bg"><div class="bar-fill" style="width:71%"></div></div>
+      <span class="label">5/7 ▶</span>
+    </div>
+    <div class="sidebar-subsection" id="week3-content">
+      <a class="sidebar-item" onclick="loadDoc('week-03-stack-queue-linkedlist/Day15-栈基础-从零到精通.md'); toggleSidebar();"><span class="day-num">Day15</span>栈基础</a>
+      <a class="sidebar-item" onclick="loadDoc('week-03-stack-queue-linkedlist/Day16-栈进阶-从零到精通.md'); toggleSidebar();"><span class="day-num">Day16</span>栈进阶</a>
+      <a class="sidebar-item" onclick="loadDoc('week-03-stack-queue-linkedlist/Day17-队列+设计-从零到精通.md'); toggleSidebar();"><span class="day-num">Day17</span>队列+设计</a>
+      <a class="sidebar-item" onclick="loadDoc('week-03-stack-queue-linkedlist/Day18-链表基础-从零到精通.md'); toggleSidebar();"><span class="day-num">Day18</span>链表基础</a>
+      <a class="sidebar-item" onclick="loadDoc('week-03-stack-queue-linkedlist/Day19-链表进阶-从零到精通.md'); toggleSidebar();"><span class="day-num">Day19</span>链表进阶</a>
+    </div>
+  </div>
+
+  <!-- Future weeks placeholder -->
+  <div class="sidebar-section" style="opacity:0.5">
+    <div class="sidebar-section-title">
+      <span class="arrow">▶</span>
+      第4周：树与二叉搜索树
+      <span class="week-tag">⏳</span>
+    </div>
+    <div class="sidebar-section-title">
+      <span class="arrow">▶</span>
+      第5周：回溯·图·Trie
+      <span class="week-tag">⏳</span>
+    </div>
+    <div class="sidebar-section-title">
+      <span class="arrow">▶</span>
+      第6周：二分·堆·位运算
+      <span class="week-tag">⏳</span>
+    </div>
+    <div class="sidebar-section-title">
+      <span class="arrow">▶</span>
+      第7周：动态规划
+      <span class="week-tag">⏳</span>
+    </div>
+    <div class="sidebar-section-title">
+      <span class="arrow">▶</span>
+      第8周：综合与冲刺
+      <span class="week-tag">⏳</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Main Content ===== -->
+<main class="main" id="mainContent">
+  <!-- Welcome page loaded by JS -->
+</main>
+
+<script>
+// ===== Config =====
+
+
+// ===== Markdown config =====
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+  headerIds: true
+});
+
+// ===== Sidebar toggle =====
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+}
+
+// ===== Toggle week section =====
+function toggleWeek(el) {
+  const arrow = el.querySelector('.arrow');
+  const sub = el.nextElementSibling.nextElementSibling;
+  if (!sub) return;
+  const isOpen = arrow.classList.contains('open');
+  arrow.classList.toggle('open', !isOpen);
+  sub.style.maxHeight = isOpen ? '0' : sub.scrollHeight + 'px';
+}
+
+// ===== Load README / Welcome =====
+async function loadReadme() {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
+  setActiveNav('nav-home');
+
+  try {
+    const resp = await fetch('https://gitee.com/api/v5/repos/iiixiyan/huawei-od-learning/contents/README.md');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const md = atob(data.content);
+    const html = marked.parse(md);
+    main.innerHTML = `
+      <div class="welcome">
+        <div class="logo">📘</div>
+        <h1>华为OD备考学习笔记</h1>
+        <p class="subtitle">从零开始 · 56天通关华为OD机考</p>
+        <div class="stats">
+          <div class="stat-card"><div class="num">19</div><div class="label">已学天数</div></div>
+          <div class="stat-card"><div class="num">3</div><div class="label">完成周数</div></div>
+          <div class="stat-card"><div class="num">56</div><div class="label">总天数</div></div>
+        </div>
+        <div class="welcome-readme markdown-body">${html}</div>
+      </div>
+    `;
+  } catch (e) {
+    main.innerHTML = `
+      <div class="welcome">
+        <div class="logo">📘</div>
+        <h1>华为OD备考学习笔记</h1>
+        <p class="subtitle">从零开始 · 56天通关华为OD机考</p>
+        <div class="stats">
+          <div class="stat-card"><div class="num">19</div><div class="label">已学天数</div></div>
+          <div class="stat-card"><div class="num">3</div><div class="label">完成周数</div></div>
+          <div class="stat-card"><div class="num">56</div><div class="label">总天数</div></div>
+        </div>
+        <div class="welcome-readme markdown-body">
+          <p style="color:var(--text-muted)">点击左侧目录选择学习文档开始学习 📖</p>
+          <p style="color:var(--text-muted)">当前进度：第1周 ✅ 第2周 ✅ 第3周 ▶ 进行中</p>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ===== Load document =====
+async function loadDoc(path) {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div class="loading"><div class="spinner"></div><p>正在加载...</p></div>';
+
+  // Remove active from all items
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+
+  const url = `https://gitee.com/api/v5/repos/iiixiyan/huawei-od-learning/contents/${path}`;
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    // Gitee API returns base64-encoded content
+    const md = atob(data.content);
+    const html = marked.parse(md);
+
+    // Extract title for header
+    const titleMatch = md.match(/^#\s+(.+)/m);
+    const title = titleMatch ? titleMatch[1].trim() : path.split('/').pop().replace(/\.md$/, '');
+
+    main.innerHTML = `<div class="markdown-body">${html}</div>`;
+    document.title = `${title} - 华为OD备考笔记`;
+
+    // Highlight active nav item
+    document.querySelectorAll('.sidebar-item').forEach(el => {
+      const onclick = el.getAttribute('onclick') || '';
+      if (onclick.includes(path)) {
+        el.classList.add('active');
+      }
+    });
+
+    // Add copy buttons to code blocks
+    document.querySelectorAll('.markdown-body pre').forEach(pre => {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = '📋 复制';
+      btn.onclick = () => {
+        const code = pre.querySelector('code');
+        if (code) {
+          navigator.clipboard.writeText(code.textContent).then(() => {
+            btn.textContent = '✅ 已复制';
+            setTimeout(() => { btn.textContent = '📋 复制'; }, 2000);
+          });
+        }
+      };
+      pre.appendChild(btn);
+    });
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (e) {
+    main.innerHTML = `
+      <div class="error-page">
+        <div class="icon">😅</div>
+        <h2>加载失败</h2>
+        <p>${e.message || '无法获取文档内容，请检查网络后重试'}</p>
+        <p style="margin-top:16px;font-size:12px;color:var(--text-muted)">${url}</p>
+      </div>
+    `;
+  }
+}
+
+// ===== Set active nav for home =====
+function setActiveNav(id) {
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  document.title = '华为OD备考学习笔记';
+}
+
+// ===== Init: open all weeks on desktop =====
+document.addEventListener('DOMContentLoaded', () => {
+  loadReadme();
+
+  // Init week toggle states - open by default
+  document.querySelectorAll('.sidebar-subsection').forEach(el => {
+    el.style.maxHeight = el.scrollHeight + 'px';
+  });
+});
+</script>
+</body>
+</html>
