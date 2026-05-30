@@ -1,7 +1,7 @@
 ---
 name: hermes-agent-skill-authoring
 description: "Author in-repo SKILL.md: frontmatter, validator, structure."
-version: 1.2.0
+version: 1.3.0
 author: Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -332,6 +332,22 @@ When a user requests a skill review or optimization, use this structured framewo
 | **P2** | **维护 — Maintenance** | ① 复盘闭环依赖外部DB？简化为结构化文本 ② 跨技能信号可共享？ ③ 版本日志清晰记录变更动机？ |
 
 **Application Rule:** Run 架构→执行→方法论→输出→维护 in order. Within each, find the single highest-ROI change and apply it before moving on. Skip dimensions with no issues found.
+
+### SkillOpt Training Methodology (Methodological Reference)
+
+The paper *SkillOpt: Making Agent Skills Optimizable* (Microsoft Research, 2025) formalizes skill editing as a training loop with gradient-like discipline. A dedicated summary is at `references/skillopt-optimization-methodology.md`.
+
+**Key principles for skill maintenance work:**
+
+| Principle | Our equivalent | How to apply |
+|:----------|:--------------|:-------------|
+| **Rollout** (batch of task executions) | 复盘采集足够场次 | Don't edit rules based on 1-2 anomalies; wait for 10+ samples |
+| **Separate reflection** (failures vs successes) | 按偏差类型分区分析 | Keep what works; add what's missing; don't mix the two |
+| **Edit budget** (text learning rate Lₜ) | 每次只 patch 1-2 条规则 | Apply edits in small batches; avoid full rewrites |
+| **Validation gate** (strict improvement on held-out data) | 复盘确认涨分才保留 | Reject if scores are flat, not just if they drop; "looks right" ≠ works |
+| **Rejected buffer** (track failed edits) | **待补 — 记录被拒绝的编辑** | Add a line in review notes: "tried X, rejected because Y" |
+
+**When to read the full reference:** When planning a multi-session skill improvement campaign, or when audit reveals unstable edits (rules that get added and removed across versions).
 
 ### Optimization-Specific Pitfalls
 

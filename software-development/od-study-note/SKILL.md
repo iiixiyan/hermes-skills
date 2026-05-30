@@ -1,7 +1,7 @@
 ---
 name: od-study-note
 description: "华为OD备考学习笔记 — 从算法题库源文档生成小白友好型详细学习文档，推送到Gitee学习仓库"
-version: 1.1.0
+version: 1.2.0
 author: Hermes Agent
 license: MIT
 platforms: [linux]
@@ -464,6 +464,99 @@ if last_day_idx >= 0:
 2. 编辑后**检查表格管道符 `|` 数量是否一致**
 3. 万不得已时，再发一个 `patch` 修复多余的 `|`
 
+## 🔄 回退策略：源仓库缺少某天课程内容
+
+### 场景描述
+
+源仓库 (`huawei-od-prep`) **可能尚未更新某天的课程内容**。截至2026-05-30，源仓库只包含 Day 1-19 的内容，Day 20 及之后的文件尚未创建。
+
+### 后果
+
+- `od_daily_push.py` 脚本中 `find_day_file(day_num)` 返回 `None`，脚本打印 `❌ 未找到 Day N 的课程文件` 并以 exit code 1 退出 → **邮件不会发送**
+- 后续步骤（生成学习文档、推送仓库）需要**自行兜底**
+
+### 兜底策略
+
+当源仓库缺少当天课程内容时：
+
+1. **记录邮件失败**：在最终输出中明确指出「⚠️ 邮件发送失败 — 源仓库未更新Day N内容」
+2. **判断当天在周中的位置**：
+   - 如果是**第1-5天（周一至周五）**：该天是新知识点日，无法从空源内容生成文档 → 生成一份「本周进度小结」或标注「文档待补充」
+   - 如果是**第6天（周六）**：参考 Day 7 和 Day 14 的模式，生成**本周综合复习文档**（Review），覆盖本周已学全部主题
+   - 如果是**第7天（周日）**：生成限时测验/综合练习文档
+3. **复习文档的内容结构**：不要写具体题解（因为没有源内容），而是：
+   - 本周知识点总览表格（列出已学的 Day 15-19 主题及核心内容）
+   - 本周四大核心套路总结（每个套路配通用模板代码）
+   - 高频易错点 & 性能优化
+   - OD机考实战指南
+   - 综合限时测验（5道典型题 + 答案折叠）
+   - 今日作业（分级练习题，指向 LeetCode 原题）
+   - 下周预告
+4. **文档命名**：使用 `Day{NN}-{主题}综合复习-从零到精通.md`（如 `Day20-栈队列链表综合复习-从零到精通.md`）
+5. **照常更新 README 并推送**：即使邮件失败，学习文档推送仍然执行
+
+```python
+# 兜底检查示例
+from pathlib import Path
+REPO_DIR = "/tmp/huawei-od-prep"
+file = next(Path(REPO_DIR).rglob(f"D{day_num:02d}*.md"), None)
+if not file:
+    file = next(Path(REPO_DIR).rglob(f"day-{day_num:02d}*.md"), None)
+
+if not file:
+    print(f"⚠️ 源仓库未包含 Day {day_num} 内容，将生成周复习文档")
+    generate_review_document = True
+```
+
+## 🔄 Git推送冲突处理
+
+当 `git push` 被远程拒绝时（`! [rejected] master -> master (fetch first)`），说明远程仓库已有本地分支落后的新提交。这种情况可能是由于：
+- 其他会话（同时运行的cron任务、手动修改等）已向远程推送过
+- 上次会话的提交由于认证问题未能推送到远程
+
+### 处理步骤
+
+```python
+import subprocess
+
+LEARN_DIR = "/tmp/huawei-od-learning-push"
+AUTH_URL = f"https://oauth2:{GITEE_TOKEN}@gitee.com/iiixiyan/huawei-od-learning.git"
+
+# 1. 重新设置远程URL（确保认证正确）
+subprocess.run(["git", "-C", LEARN_DIR, "remote", "set-url", "origin", AUTH_URL])
+
+# 2. 先拉取并rebase（不要用merge，避免产生多余的merge commit）
+result = subprocess.run(["git", "-C", LEARN_DIR, "pull", "--rebase"],
+                        capture_output=True, text=True, timeout=60)
+if result.returncode != 0:
+    print(f"⚠️ Rebase失败: {result.stderr}")
+    # 如果rebase失败，尝试stash + rebase
+    subprocess.run(["git", "-C", LEARN_DIR, "stash"], capture_output=True)
+    subprocess.run(["git", "-C", LEARN_DIR, "pull", "--rebase"], capture_output=True, timeout=60)
+    subprocess.run(["git", "-C", LEARN_DIR, "stash", "pop"], capture_output=True)
+
+# 3. 检查状态 — rebase后staged changes可能被清除
+# 如果Day N文件仍存在于磁盘但未被staged
+result = subprocess.run(["git", "-C", LEARN_DIR, "status", "--short"],
+                        capture_output=True, text=True)
+if result.stdout.strip():
+    # 有未staged的变更，需要重新add + commit
+    subprocess.run(["git", "-C", LEARN_DIR, "add", "-A"], capture_output=True, timeout=30)
+    subprocess.run(["git", "-C", LEARN_DIR, "commit", "-m", "📚 Day N: ..."],
+                   capture_output=True, timeout=30)
+
+# 4. 推送
+result = subprocess.run(["git", "-C", LEARN_DIR, "push"],
+                        capture_output=True, text=True, timeout=60)
+print(f"Push: {result.returncode} - {result.stderr[:200]}")
+```
+
+### 注意事项
+
+- **rebase 不会删除已存在的文件**：即使 rebase 清空了 staged changes，只要 Day N 文件已经保存在磁盘上，`git status` 仍然会看到它作为 untracked 或 modified 文件
+- **如果 pull --rebase 后 status --short 为空**：说明其他会话的提交已经包含了相同的文件或更改，无需额外操作
+- **认证失败 vs 推送冲突**：先确认 403 认证问题再执行 pull。如果认证失败（403 "The token username invalid"），fix remote URL 后再尝试
+
 ## ⚠️ 常见错误
 
 ### ❌ Gitee认证使用错误的用户名
@@ -524,6 +617,63 @@ with open(f"{LEARN_DIR}/README.md") as f:
 
 ### ❌ 源仓库周目录名与预期不符
 源仓库 `huawei-od-prep` 的第3周目录名是 `week-03-linkedlist-tree` 而非 `week-03-stack-queue-linkedlist`。使用 `rglob` 搜索文件而不是硬编码周目录名，避免因命名不一致导致文件找不到。
+
+## 静态站点部署（Web查看层）
+
+学习笔记除了直接用 Gitee 仓库浏览外，还有一个 **静态HTML站点** 部署在服务器上，提供更好的阅读体验。
+
+### 站点信息
+
+| 项目 | 值 |
+|------|-----|
+| **URL** | `http://106.12.76.187:8765/` |
+| **站点目录** | `/tmp/site/` |
+| **组件** | `index.html`（前端页面）+ `server.py`（Python代理服务） |
+| **端口** | 8765 |
+| **数据源** | 通过 `/api/gitee/contents/` 代理实时拉取 Gitee API 内容 |
+
+### 站点功能
+
+- **深色/浅色主题切换**：Header 右侧 🌙/☀️ 按钮，偏好保存到 `localStorage`
+- **左侧目录树**：按周分组，可折叠，自动高亮当前文档
+- **Markdown 渲染**：使用 `marked.js` 在前端渲染
+- **代码复制按钮**：鼠标悬停在代码块上显示 📋 复制按钮
+- **手机自适应**：侧栏自动隐藏，点击 ☰ 展开
+- **进度条**：每周显示完成进度
+- **首页统计**：已学天数、完成周数等概览
+
+### 更新站点
+
+生成新的学习文档后，如果需要更新站点（目前站点已内置完整的目录结构和数据代理，**无需手动更新**，因为前端通过 `<yourdomain>/api/gitee/contents/` 代理实时从 Gitee API 拉取最新内容）。
+
+但如果需要修改前端样式或功能，按以下步骤操作：
+
+```bash
+# 1. 编辑 index.html 或 server.py
+vim /tmp/site/index.html
+
+# 2. 重启服务器
+pkill -f "python3 server.py"
+cd /tmp/site && python3 server.py &
+```
+
+### 代理服务器说明
+
+`server.py` 注册了 `/api/gitee/contents/<path>` 路由，它会：
+
+1. 代理 Gitee API v5 `repos/iiixiyan/huawei-od-learning/contents/<path>`
+2. 解码 Base64 内容，返回 `Content-Type: text/markdown`
+3. 添加 CORS 头（`Access-Control-Allow-Origin: *`）
+
+这解决了 Gitee raw 直链返回 `text/plain` 导致浏览器无法正确渲染 HTML 的问题。
+
+### 主题切换实现
+
+- CSS 变量驱动：`.light-theme` class 覆盖所有颜色变量
+- 暗色默认为深蓝色系（#0f0f1a背景）
+- 亮色为白底蓝字（#f5f7fa背景，#2563eb强调色）
+- 包含滚动条、强文本、行内代码颜色的同步适配
+- 切换后自动持久化到 `localStorage`（key: `od-theme`）
 
 ## 参考
 

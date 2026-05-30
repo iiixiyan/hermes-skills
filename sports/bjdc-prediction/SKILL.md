@@ -1,6 +1,6 @@
 ---
 name: bjdc-prediction
-version: 4.5.0
+version: 4.7.0
 description: 北单（北京单场）让球胜平负综合预测体系。双模并行（八维预测法+实力盘定位法）+进球数预测。仅适用于北单，不适用竞足。
 metadata:
   hermes:
@@ -8,7 +8,7 @@ metadata:
     requires_toolsets: [browser, terminal, code]
 ---
 
-# 北单让球胜平负综合预测体系（v4.5.0）
+# 北单让球胜平负综合预测体系（v4.7.0 SkillOpt训练循环版）
 
 > ⚡ Level 1 路由文档。详细方法论见 references/（Level 2 按需加载）。
 
@@ -33,14 +33,19 @@ metadata:
 | ⭐⭐ | 用户要求识别诱盘/阻盘 |
 | ⭐⭐ | 用户要求分析特定盘口类型 |
 | ⭐ | 用户询问数据分析方法 |
+| ⭐⭐ | 用户要求"稳赢"/"必赢"推荐，SP≥2.1约束 |
 
 ---
 
 ## 边界与铁纪
 
 - ✅ **仅北单**（lotteryId=45），竞足问题请转 `football-prediction`
+- ✅ **场次拆分：早场 vs 晚场分别处理**
+  - **早场（12:55~19:00）**：J1联赛、K2联赛、芬超、芬甲、瑞典甲下午场等 → 在11:00前完成采集+预测
+  - **晚场（22:00~06:00）**：挪超、瑞典超、芬超晚场、罗甲、意乙、法甲、爱超、冰岛超、智利甲、巴西乙等 → 在22:00前完成采集+预测
+  - 两批次互不重叠，各管各的时间段
 - ❌ 禁止北单分析中输出精确比分（如2-1、1-0）
-- ❌ 禁止北单分析使用 λ 公式/xG 模型/竞足输出格式
+- ❌ 禁止使用 λ 公式/xG 模型/竞足输出格式
 - ❌ 禁止批量输出多场 — 每场单独发送
 - ✅ 北单三赔中最低 = 市场最看好方向（但需Edge验证，不可盲信）
 - ✅ 逐场采集逐场分析，不可批量
@@ -70,6 +75,13 @@ metadata:
 6. **诱上阻上与盘口验证** — 降水不升盘=诱上，升盘中高水=阻上
 7. **进阶工具交叉验证** — 必发交易量+凯利排雷+大小球协同
 8. **双模交叉验证与输出** — 两模一致→单选，分歧→并列+偏重/放弃
+9. **（按需）SP≥2.1过关组合构建** — 当用户要求"必赢"/"稳赢"时：
+   - **约束**：每项SP≥2.1（用户刚需），总投入=2^双选数×2元
+   - **双选覆盖策略**：主不败(3+1) / 客不败(1+0) / 分胜负(3+0)，选最可靠的
+   - **联赛优先级**：挪超≥瑞典超>芬甲>冰岛超>意乙>爱超>爱甲（信号可靠性排序）
+   - **组合公式**：4双选+5单选=16注32元；5双选+5单选=32注64元
+   - ⚠️ **"必赢"是信心表述，非绝对保证** — 必须标注双选覆盖范围而非误导
+   - 详见 `references/14-cross-source-validation.md`
 
 > 详细8步含进球数预测：`references/12-goal-prediction.md`
 
@@ -130,6 +142,8 @@ BJDC_STRUCT_END -->
 | 11 | `references/11-review-insights.md` | 复盘优化经验、联赛规律 | Step 10 |
 | 12 | `references/12-goal-prediction.md` | 进球数预测完整方法 | Step 8 |
 | 13 | `references/13-ouzhi-signal-classification.md` | 欧指一致性信号分类 | Step 5+10 |
+| 14 | `references/14-cross-source-validation.md` | **多源交叉验证 + SP≥2.1过关组合构建** | 用户自备SP数据时 |
+| 15 | `references/15-batch-quick-classification.md` | **批量预测快速分类指南** — 三通道分类法+快速决策矩阵+5类典型模式 | Step 5（批量场景） |
 
 ---
 
@@ -137,9 +151,16 @@ BJDC_STRUCT_END -->
 
 - **数据采集** → `scripts/ingest_bjdc.py`（Level 3，封装采集+缓存+重试）
 - **DB追踪** → `scripts/bjdc_prediction_tracker.py`（bjdc_predictions + bjdc_daily_summary 表）
-- **Cron任务** → 每天22:00自动拉数据→跑双模→写DB→更新Memory
+- **Cron任务** → 分两批次：
+  - **早场（11:00）**：覆盖12:55~19:00的J1/K2/芬超/芬甲/瑞典甲下午场
+  - **晚场（22:00）**：覆盖22:00~06:00的挪超/瑞典超/芬超晚场/罗甲/意乙/法甲/爱超/冰岛超/智利甲/巴西乙等
+  - 两批次互不重叠，各管各的时间段
+  - **SP预警（21:00）**：开赛前1h检测SP漂移>15%，静默模式（无异动不推送）
+- **DB追踪** → `scripts/bjdc_prediction_tracker.py`（bjdc_predictions + bjdc_daily_summary 表）
 - **Memory协同** → 联赛/盘口规律、历史命中率写入长期记忆
 - **skill-evolver** → GT驱动迭代：复盘→扩展GT manifest→自动评测
+- **SkillOpt训练循环** → `references/bjdc-skillopt-training-cycle.md`（复盘→编辑→验证→拒绝流程）
+- **Rejected Buffer** → `references/16-rejected-edits-buffer.md`（被拒绝的编辑方案记录）
 
 ---
 
@@ -147,5 +168,7 @@ BJDC_STRUCT_END -->
 
 | 版本 | 日期 | 变更 |
 |:----|:----|:-----|
-| v4.5.0 | 2026-05-28 | **SKILL.md瘦身+Layer区分+工程层补全**：①主文档压缩为路由+快速参考 ②显式区分Layer2/Layer3 ③新增结构化数据段供evolver解析 ④对齐Progressive Disclosure架构 |
+| v4.5.1 | 2026-05-29 | **新增多源交叉验证参考文件**：`references/14-cross-source-validation.md` 含数据源差异警示、SP≥2.1过关组合构建方法、北单编码体系(3/1/0) |
+| v4.7.0 | 2026-05-31 | **SkillOpt训练循环集成**：①新增 `references/bjdc-skillopt-training-cycle.md` 复盘→编辑→验证→拒绝流程 ②新增 `references/16-rejected-edits-buffer.md` 拒绝记账缓冲区 ③编辑预算控制（每日最多3条）④拒绝冷却期机制 |
+| v4.6.0 | 2026-05-30 | **新增批量预测快速分类指南**：`references/15-batch-quick-classification.md` 含三通道分类法、5类典型预测模式、快速决策矩阵 |
 | v4.4.2 | 2026-05-28 | 复盘2026-05-27周三18场；信号追踪表更新；熔断表新增解放者杯/南俱杯/冰岛超/芬甲 |
