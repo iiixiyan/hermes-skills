@@ -19,6 +19,8 @@
 
 ### 16.1 赛后复盘四步骤
 
+> **数据源**：北单开奖结果页 `kt.59itou.com/danchang/prize/`（批量多批次扫描法详见 `59itou-data-fetch` skill → `references/prize-page-batch-scanning.md`）
+
 **真正复盘的四个步骤**：
 1. 赛后回顾赛前分析记录，标记关键判断依据
 2. 对比实际比赛过程与预判的差异点

@@ -105,18 +105,18 @@
 
 **复盘核心原则：必须按联赛分组分析，不得混在一起统计。** 不同联赛的盘口规律、主场系数、冷门率差异极大，混在一起分析会导致规律被稀释。详见 `references/league-review-templates.md`。
 
-**数据获取**：
-- 使用竞足开奖结果页面 **`https://kt.59itou.com/jingcai/prize/`** 获取已完成比赛（⚠️ `www.59itou.com` 域名下该页面可能因证书错误或404无法访问，优先使用 `kt.59itou.com` 子域名）
-- 亦可尝试: `https://www.59itou.com/jingcai/prize/`（HTTPS存在证书问题，如明确ERR_CERT则改用kt子域名）
-- 默认显示昨日最新比赛日数据，点击日期标签（今日/昨日/5-18/5-17等）可切换比赛日
-- 页面底部有更多历史日期标签
-- ⚠️ **开奖结果逐步放出：不是所有比赛同时开奖**。比赛时间晚的场次（如解放者杯22:00）可能在赛后次日凌晨才出结果。复盘时必须**刷新prize page多次**，直到所有预期场次都出现或确认延期/取消。2026-05-26复盘案例：首次获取仅4场，第二次5场，第三次7场全出。
-- 使用 `document.querySelectorAll('[class*="item"]')` 定位比赛条目元素，**每个条目的 `id` 属性即为 matchID**（如 `id="2671925"`）
-- 每条item内嵌"析"文本（`a`标签）可直接跳转到详情页
-- 各SP字段的顺序（每个prizeitem内）：联赛名 → 场次(周二001) → 主队名 → 比分 → 客队名 → "析" → 胜平负SP → 让球SP → 比分SP → 总进球SP → 半全场SP
-- 注意：prize page 只显示**中奖SP赔率**（即赛后真实赔率），不是全量赛前赔率
-- 完整的赛前赔率（胜/平/负三项）需从竞足列表页详情页的**欧指Tab中的百家平均即赔/初赔**获取
-- ⚠️ **已完成比赛（开奖结果页面）的亚指Tab不可用**：已结束的比赛在详情页亚指Tab会显示"参数错误"，并非网络问题。这是页面JS渲染限制，无法获取已完成比赛的盘口水位数据。欧指Tab和战绩Tab数据正常可获取。
+**数据获取（赛果查询）**：
+- ⭐ **首选：使用澳客(okooo)开奖结果页面**
+  - URL格式: `https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=YYYY-MM-DD`
+  - 例: `https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=2026-05-30`
+  - 注意：需要加 `User-Agent: Mozilla/5.0` 和 `Referer: https://www.okooo.com/` 头，否则被WAF拦截返回405
+  - 编码: GBK → UTF-8 转码（`iconv -f GBK -t UTF-8`）
+  - 提供信息：序号、主客队（缩写）、全场比分、半场比分、中奖SP
+  - 查询参数 `LotteryType` 可选：`SportteryScore`(比分)、`SportteryWDL`(让球胜平负)、`SportteryNWDL`(胜平负)、`SportteryTotalGoals`(总进球)、`SportteryHalfFull`(半全场)
+- 备用: 使用竞足开奖结果页面 **`https://kt.59itou.com/jingcai/prize/`** 获取已完成比赛
+- 注意：okooo只显示比分结果和SP，不显示完整赛前赔率（欧指/亚指）。完整的赛前赔率（胜/平/负三项）需从竞足列表页详情页的**欧指Tab中的百家平均即赔/初赔**获取
+- ⚠️ **开奖结果逐步放出：不是所有比赛同时开奖**。比赛时间晚的场次（如解放者杯22:00）可能在赛后次日凌晨才出结果。复盘时必须**刷新多次**，直到所有预期场次都出现或确认延期/取消。
+- ⚠️ **已完成比赛（开奖结果页面）的亚指Tab不可用**：已结束的比赛在详情页亚指Tab会显示"参数错误"——这是页面JS渲染限制，欧指Tab和战绩Tab数据正常可获取。
 
 **联赛分组分析步骤**：
 1. 获取所有比赛数据后，按联赛名称分组归类
