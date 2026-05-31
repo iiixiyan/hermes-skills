@@ -117,8 +117,3 @@ autocli read <url>                # 任意网页正文提取
 # 使用 ghproxy 代理下载
 curl -sL "https://ghproxy.net/https://github.com/.../releases/download/..." -o output.tar.gz
 ```
-
-### 终端工具已知问题
-
-`terminal` 工具存在持续 bug：所有命令报错 `cd: y: No such file or directory`，exit_code=126。
-**解决方案**：始终使用 `execute_code` 配合 Python `subprocess.run()` 执行系统命令。

@@ -185,7 +185,69 @@ text = await page.evaluate("document.body.innerText")
 
 ---
 
-## 五、效率优化提示
+## 五、Hermes浏览器环境下的采集限制与应对（2026-05-30验证）
+
+### 已知问题
+
+Hermes内置浏览器在采集59itou北单详情页时存在SPA tab切换问题：
+
+| 问题 | 表现 | 原因 |
+|:----|:----|:-----|
+| 欧指Tab点击无效 | `browser_click(ref=@e5)` 点击欧指Tab后，页面保持"战绩"内容不变，或导航回列表页 | Vue SPA的tab切换通过框架路由处理，Hermes的click事件可能未正确触发Vue事件 |
+| 亚指Tab同 | `browser_click(ref=@e6)` 同上 | 同上 |
+| `page.evaluate`式click无效 | 通过`document.querySelectorAll(".van-tab")`找欧指并.click()，tab不切换 | 浏览器安全限制，Vue未捕获到dispatchEvent |
+| API直接调用CORS | 通过`XMLHttpRequest`调用`stat-api.51aitou.com`等API被CORS拦截 | 跨域限制 |
+
+### 应对策略
+
+**可靠的采集方案（已验证）：**
+
+1. **战绩Tab（Always可靠）**
+   - `browser_navigate(url)` → 详情页自动显示战绩Tab
+   - `browser_snapshot()` 或 `browser_console` 获取innerText
+   - 可获取：近10场战绩、主客战绩、等级战绩、H2H、近期赛程、综合实力
+
+2. **初盘数据**
+   - 从北单列表页获取（DIV.id=matchID + 胜/平/负三赔）
+   - 获取方式：`browser_console` 执行 `document.body.innerText` 并从列表页HTML提取
+
+3. **尝试不保证的方案（欧指/亚指Tab）**
+   ```python
+   # 先导航到详情页
+   browser_navigate(url)
+   # 尝试点击欧指Tab（可能失败）
+   browser_click(ref=@e5)  # ref来自snapshot的欧指tab
+   # 如果snapshot仍显示战绩内容，说明切换失败
+   # 回退：仅用战绩数据 + 列表初盘做分析
+   ```
+
+4. **回退模式**
+   - 当欧指/亚指Tab不可用时，分析只能基于：
+     - 列表页初盘（三赔中最低=市场方向）
+     - 战绩Tab（近10场、H2H、综合实力）
+     - 排名差
+   - **信号完整性受限**：无法判断4b一致升赔、12一致降赔等关键信号
+   - **信心评级下调**：缺少欧指信号 → 降一星信心
+
+### 与Playwright脚本对比
+
+| 维度 | Playwright独立脚本 | Hermes内置浏览器 |
+|:----|:-----------------|:----------------|
+| Tab切换 | ✅ `page.evaluate('.van-tab')` 可靠 | ❌ 不可靠，Vue事件不触发 |
+| 网络拦截 | ✅ 可拦截API响应 | ❌ 不可用 |
+| 执行速度 | ~5-8秒/场 | ~10-15秒/场（含导航） |
+| 内存消耗 | ~200MB/实例 | ~500MB+（Hermes自身） |
+| 最佳实践 | 批量采集用Playwright脚本 | 单场快速查阅用Hermes浏览器 |
+
+### 后续可能方案
+
+- 通过 `browser_navigate` 直接访问API URL（需找到正确的鉴权参数）
+- 从JS bundle中提取API签名算法
+- 使用 `networkidle` 等待策略确保页面完全渲染后再点击Tab
+
+---
+
+## 六、效率优化提示
 
 1. **Playwright单场速度**：约5-8秒/场（含导航+2次Tab切换+条件等待）
 2. **一次性分析多场**：用 `batch_collect()` 一次浏览器会话采集多场，避免重复打开浏览器
@@ -310,7 +372,7 @@ async def collect_review_data():
 ### 复盘数据采集要点
 
 1. **赛后亚指Tab不可用**：取"参数错误"或空数据，只采欧指Tab
-2. **北单详情页前缀回退**：默认 /202/，不行则试 /37/、/175/、/378/、/379/、/456/
+2. **北单详情页前缀回退**：默认 /202/，不行则试 /62/、/37/、/175/、/378/、/379/、/456/
 3. **欧指数据提取**：仅需"指数变化"段（上升/降低家数），百家平均可选
 4. **32场 ≈ 3.3分钟**（每场~6秒），一次性ExecuteCode可完成
 5. **按联赛分组**：从prize page的`parts[0]`（联赛名）直接获取

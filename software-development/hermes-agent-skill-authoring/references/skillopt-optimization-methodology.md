@@ -81,8 +81,8 @@ minibatch 暴露**可迁移的程序性错误**：总是查错来源、总是漏
 | 日复盘/周复盘/月复盘多层拆分 | slow/meta update | ✅ |
 | 反向优化 skill | 验证集门控 | ✅ |
 | 每次只改 1-2 条规则 | 编辑预算 Lₜ | ✅ |
-| ❌ 未记录被拒绝的编辑方向 | rejected buffer | **待补** |
-| ❌ 部分规则缺乏严格 hold-out 验证 | selection split | **待补** |
+| ❌ 未记录被拒绝的编辑方向 | rejected buffer | ✅ **已实现** — football-prediction `references/10-rejected-edits-buffer.md` + bjdc-prediction `references/16-rejected-edits-buffer.md` |
+| ❌ 部分规则缺乏严格 hold-out 验证 | selection split | ✅ **已实现** — football-prediction `references/11-validation-report.md`（S_old vs S_new 完整记录） |
 | 多 skill 独立优化 | 技能冲突管理 | 未来 |
 
 ## 关键实验数据

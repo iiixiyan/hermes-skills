@@ -66,6 +66,18 @@ curl -s "https://r.jina.ai/https://example.com"
 
 将 URL 内容转为 markdown 格式返回，适合无 API 的网页。
 
+### 微信公众号文章（原始HTML提取法）
+
+当浏览器被CAPTCHA拦截或Jina Reader超时，直接从服务器HTML提取正文：
+
+1. `curl` 下载原始HTML（带Android UA）
+2. Python提取 `<div id="js_content">` 中的文本
+3. 去HTML标签+解码实体
+
+详见 `references/weixin-article-raw-extract.md`。
+
+**优势**：绕过CAPTCHA，文章正文始终在原始HTML中（被CSS隐藏，等待JS渲染）。微信阻断的是浏览器渲染，不是HTTP响应。
+
 ### YouTube 视频字幕
 
 ```bash
