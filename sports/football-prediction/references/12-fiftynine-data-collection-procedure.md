@@ -341,7 +341,30 @@ for(var i=0; i<tabs.length; i++) {
 
 ---
 
-## 七、本流程验证记录
+## 七、赛果数据获取（复盘用）
+
+复盘需要获取实际赛果时，**不要使用59itou prize页面**（数据不完整+证书问题）。
+
+**首选：澳客(okooo)开奖结果页面**
+```
+URL:    https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=YYYY-MM-DD
+例:     https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=2026-05-30
+```
+
+**注意**（踩坑记录）：
+- ⚠️ 该站点使用**阿里云WAF**防护，裸curl/browser_navigate会被405拦截
+- ✅ 必须加 `User-Agent: Mozilla/5.0` 和 `Referer: https://www.okooo.com/` 头
+- ✅ 编码为GBK，需 `iconv -f GBK -t UTF-8` 转码
+- 查询参数 `LotteryType` 可选：`SportteryScore`(比分)、`SportteryWDL`(让球胜平负)、`SportteryNWDL`(胜平负)、`SportteryTotalGoals`(总进球)、`SportteryHalfFull`(半全场)
+- 返回：序号、主客队（缩写）、全场比分、半场比分、中奖SP
+
+**备用**：`https://kt.59itou.com/jingcai/prize/`（仅当okooo不可达时）
+
+详细流程见 `references/03-review-experience.md` §赛果查询。
+
+---
+
+## 八、本流程验证记录
 
 | 验证场次 | 日期 | 状态 | 备注 |
 |:---------|:----|:----:|:-----|
