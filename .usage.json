@@ -3,14 +3,14 @@
     "archived_at": null,
     "created_at": "2026-05-17T07:17:43.954412+00:00",
     "created_by": null,
-    "last_patched_at": "2026-06-02T14:16:08.124134+00:00",
-    "last_used_at": "2026-06-03T02:00:45.678015+00:00",
-    "last_viewed_at": "2026-06-02T14:15:51.897335+00:00",
-    "patch_count": 113,
+    "last_patched_at": "2026-06-03T23:56:38.407658+00:00",
+    "last_used_at": "2026-06-03T23:56:21.002081+00:00",
+    "last_viewed_at": "2026-06-03T23:56:20.999994+00:00",
+    "patch_count": 118,
     "pinned": false,
     "state": "active",
-    "use_count": 224,
-    "view_count": 137
+    "use_count": 235,
+    "view_count": 141
   },
   "agent-world": {
     "archived_at": null,
@@ -55,14 +55,14 @@
     "archived_at": null,
     "created_at": "2026-05-19T15:58:15.344803+00:00",
     "created_by": null,
-    "last_patched_at": "2026-06-02T04:15:22.101463+00:00",
-    "last_used_at": "2026-06-02T14:00:36.677566+00:00",
-    "last_viewed_at": "2026-06-02T04:15:25.997005+00:00",
-    "patch_count": 173,
+    "last_patched_at": "2026-06-03T14:10:06.538978+00:00",
+    "last_used_at": "2026-06-03T14:09:37.148820+00:00",
+    "last_viewed_at": "2026-06-03T14:09:37.146751+00:00",
+    "patch_count": 179,
     "pinned": false,
     "state": "active",
-    "use_count": 229,
-    "view_count": 199
+    "use_count": 236,
+    "view_count": 203
   },
   "darwin-skill": {
     "archived_at": null,
@@ -129,18 +129,31 @@
     "use_count": 2,
     "view_count": 2
   },
+  "football-data": {
+    "archived_at": null,
+    "created_at": "2026-06-03T23:35:14.224269+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_used_at": "2026-06-03T23:38:33.319666+00:00",
+    "last_viewed_at": "2026-06-03T23:38:33.317749+00:00",
+    "patch_count": 0,
+    "pinned": false,
+    "state": "active",
+    "use_count": 3,
+    "view_count": 3
+  },
   "football-prediction": {
     "archived_at": null,
     "created_at": "2026-05-17T12:10:52.600601+00:00",
     "created_by": null,
-    "last_patched_at": "2026-06-02T02:35:09.254415+00:00",
-    "last_used_at": "2026-06-03T02:07:01.510226+00:00",
-    "last_viewed_at": "2026-06-03T02:07:01.505770+00:00",
-    "patch_count": 235,
+    "last_patched_at": "2026-06-03T23:45:06.999641+00:00",
+    "last_used_at": "2026-06-03T23:56:06.240345+00:00",
+    "last_viewed_at": "2026-06-03T23:56:06.238065+00:00",
+    "patch_count": 245,
     "pinned": false,
     "state": "active",
-    "use_count": 335,
-    "view_count": 281
+    "use_count": 353,
+    "view_count": 296
   },
   "markdown-doc-viewer": {
     "archived_at": null,
