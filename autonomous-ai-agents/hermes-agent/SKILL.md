@@ -358,6 +358,7 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | Section | Key options |
 |---------|-------------|
 | `model` | `default`, `provider`, `base_url`, `api_key`, `context_length` |
+| `fallback_providers` | List of `{provider, model, base_url, api_key}` dicts — automatic fallback when primary model fails (429, connection error, etc.). Set via `hermes config set fallback_providers` or directly in config.yaml. |
 | `agent` | `max_turns` (90), `tool_use_enforcement` |
 | `terminal` | `backend` (local/docker/ssh/modal), `cwd`, `timeout` (180) |
 | `compression` | `enabled`, `threshold` (0.50), `target_ratio` (0.20) |
@@ -400,7 +401,70 @@ Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/con
 | Custom endpoint | Config | `model.base_url` + `model.api_key` in config.yaml |
 | GitHub Copilot ACP | External | `COPILOT_CLI_PATH` or Copilot CLI |
 
-Full provider docs: https://hermes-agent.nousresearch.com/docs/integrations/providers
+### Custom Provider Setup (e.g. SenseNova/商汤)
+
+For providers that don't have a built-in adapter, use `provider: custom` with explicit endpoint and key:
+
+```yaml
+model:
+  default: deepseek-v4-flash        # model ID on the custom provider
+  provider: custom                  # always 'custom' for non-standard endpoints
+  base_url: https://token.sensenova.cn/v1  # provider's OpenAI-compatible base URL
+  api_key: sk-xxx                   # or set via env var + reference it in .env
+```
+
+**Discover available models:**
+```bash
+curl -s "https://token.sensenova.cn/v1/models" \
+  -H "Authorization: Bearer $YOUR_API_KEY"
+```
+
+**SenseNova (商汤) known models:**
+| Model ID | Description | Status |
+|---------|-------------|--------|
+| `deepseek-v4-flash` | DeepSeek V4, 256K context, supports tools/json_mode/reasoning | ✅ Working (both Sensenova & DeepSeek official) |
+| `sensenova-6.7-flash-lite` | SenseNova lightweight multimodal, supports image input | ⚠️ Needs `thinking:disabled` param (see sensenova-custom-provider.md) |
+| `sensenova-u1-fast` | Accelerated version specialized for infographics generation | ❌ NOT FOUND on chat endpoint — skip |
+
+**Configuring fallback providers** — when the primary model fails (rate-limited, connection issues, daily quota exhausted), Hermes automatically tries fallback providers in order:
+
+```yaml
+fallback_providers:
+  - provider: custom
+    model: sensenova-6.7-flash-lite
+    base_url: https://token.sensenova.cn/v1
+    api_key: sk-xxx
+```
+
+Each fallback entry follows the same structure as `model.*`. Fallback activates automatically on 429s, connection failures, and quota exhaustion — no user intervention needed.
+
+**Fallback strategy: same model, different endpoint + tiered fallbacks.** A useful pattern is configuring the *same model* (e.g. `deepseek-v4-flash`) through two different API endpoints as fallback chain — if SenseNova's proxy is down, Hermes falls back to the DeepSeek official API directly. Then add a higher-quality model (`deepseek-v4-pro`) as a second-tier fallback, and a lightweight model (`sensenova-6.7-flash-lite`) as a last-resort fallback. Example:
+
+```yaml
+fallback_providers:
+  - provider: custom
+    model: deepseek-v4-flash       # Tier 1: same model, different endpoint
+    base_url: https://token.sensenova.cn/v1
+    api_key: sk-xxx
+  - provider: custom
+    model: deepseek-v4-pro         # Tier 2: higher quality
+    base_url: https://api.deepseek.com/v1
+    api_key: sk-xxx
+  - provider: custom
+    model: sensenova-6.7-flash-lite # Tier 3: lightweight last resort
+    base_url: https://token.sensenova.cn/v1
+    api_key: sk-xxx
+```
+
+Note: `sensenova-6.7-flash-lite` requires `thinking: disabled` parameter — see `references/sensenova-custom-provider.md` for details.
+
+Both use `provider: custom` since they're OpenAI-compatible. See `references/deepseek-official-api.md` for the exact config.
+
+**Discover available models on a custom provider:**
+```bash
+curl -s "https://<base_url>/v1/models" -H "Authorization: Bearer $API_KEY"
+```
+Use the output to pick model IDs for `model.default` and `fallback_providers`. Not all models on a platform are suitable for fallback — e.g. image-gen-only models (output modality = image) can't replace a chat model.
 
 ### Toolsets
 

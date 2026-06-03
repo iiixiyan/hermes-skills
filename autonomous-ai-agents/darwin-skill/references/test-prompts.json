@@ -1,0 +1,5 @@
+[
+  {"id":1,"scenario":"单skill优化","prompt":"用 darwin-skill 优化 football-prediction 这个 skill","expected":"Phase 0→Phase 0.5→Phase 1 独立judge评分→找最低维度→Phase 2 hill climbing→触顶检测→Phase 3"},
+  {"id":2,"scenario":"全量评估","prompt":"评估所有 skills 的质量","expected":"扫描所有SKILL.md→runtime gate→9维rubric评分→输出评分卡"},
+  {"id":3,"scenario":"歧义场景","prompt":"我想让你帮我把这个 skill 改得更好一点","expected":"识别优化任务→询问范围→异常fallback→展示测试prompt确认"}
+]

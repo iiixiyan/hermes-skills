@@ -13,7 +13,7 @@ description: >-
   use edgeone-pages-dev for troubleshooting).
 metadata:
   author: edgeone
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # EdgeOne Pages Deployment Skill
@@ -87,7 +87,40 @@ cat .edgeone/.token 2>/dev/null
 npm install -g edgeone@latest
 ```
 
+> **China network**: If installation times out, use the npmmirror registry:
+> ```bash
+> npm install -g edgeone@latest --registry=https://registry.npmmirror.com
+> ```
+
+> **Partial install recovery**: If `npm install` times out but the package directory exists (`/usr/local/lib/node_modules/edgeone/`), create the symlink manually:
+> ```bash
+> ln -sf /usr/local/lib/node_modules/edgeone/edgeone-bin/edgeone.js /usr/local/bin/edgeone
+> ```
+
 Verify: `edgeone -v` — confirm output is `1.2.30` or higher. Retry installation if not.
+
+### ⚠️ China network pitfall
+
+When deploying from a China-based server, the default npm registry (`registry.npmjs.org`) may time out. Switch to the npmmirror registry:
+
+```bash
+npm config set registry https://registry.npmmirror.com
+npm install -g edgeone@latest
+```
+
+### ⚠️ Incomplete install (missing symlink)
+
+If `npm install` times out after downloading the package but before creating the binary symlink, the package exists on disk but `edgeone` is not on PATH. Verify:
+
+```bash
+ls /usr/local/lib/node_modules/edgeone/edgeone-bin/edgeone.js
+```
+
+If the file exists, create the symlink manually:
+
+```bash
+ln -sf /usr/local/lib/node_modules/edgeone/edgeone-bin/edgeone.js /usr/local/bin/edgeone
+```
 
 ---
 
@@ -257,7 +290,9 @@ https://console.cloud.tencent.com/edgeone/pages/project/pages-xxxxxxxx/deploymen
 
 | Error | Solution |
 |-------|----------|
-| `command not found: edgeone` | Run `npm install -g edgeone@latest` |
+| `command not found: edgeone` | Run `npm install -g edgeone@latest` (use npmmirror.com if in China) |
+| `npm install` times out | Set registry to npmmirror: `npm config set registry https://registry.npmmirror.com` then retry |
+| Package installed but `edgeone` still not found | npm timed out before creating symlink — check `/usr/local/lib/node_modules/edgeone/edgeone-bin/edgeone.js` exists, then manually `ln -sf` it to `/usr/local/bin/edgeone` |
 | Browser does not open during login | Switch to token login |
 | "not logged in" error | Run `edgeone whoami` to check, then re-login or use token |
 | Auth error with token | Token may be expired — regenerate at the console |

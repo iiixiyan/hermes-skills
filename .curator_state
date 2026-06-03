@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/root/.hermes/logs/curator/20260524-080619",
-  "last_run_at": "2026-05-24T08:06:19.056334+00:00",
-  "last_run_duration_seconds": 47.797358,
-  "last_run_summary": "auto: no changes; llm: ## Analysis\n\nI've loaded both agent-created skills. Here's the landscape:\n\n| Skill | Domain | Nature |\n|---|---|---|\n| `feishu-lark-cli` | Feishu/Lark platform CLI operations | Already a class-level umbrella (auth, docs, wiki, IM, calendar,…",
+  "last_report_path": "/root/.hermes/logs/curator/20260531-085701",
+  "last_run_at": "2026-05-31T08:57:01.859800+00:00",
+  "last_run_duration_seconds": 85.129689,
+  "last_run_summary": "auto: no changes; llm: All scans complete. Here's the result of this consolidation pass.\n\n---\n\n## Curator Summary\n\n**Skills before pass:** 5 agent-created (agent-reach, data-collection-toolkit, feishu-lark-cli, markdown-doc-viewer, od-study-note)\n**Archived:** 1 …\narchived 1 skill(s):\n  • agent-reach → data-collection-toolkit\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin data-collection-toolkit",
   "last_run_summary_shown_at": null,
   "paused": false,
-  "run_count": 1
+  "run_count": 2
 }

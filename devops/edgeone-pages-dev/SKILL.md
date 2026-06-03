@@ -31,6 +31,7 @@ Develop full-stack applications on **EdgeOne Pages** — Edge Functions, Cloud F
 - Setting up WebSocket endpoints (Node.js runtime)
 - Integrating Express, Koa, Gin, Echo, Flask, FastAPI, or Django on EdgeOne Pages
 - Debugging EdgeOne Pages runtime errors (function failures, middleware issues, KV problems)
+- **Building an API-driven content site** — a static HTML shell that fetches markdown content from a remote API (Gitee, GitHub, etc.) and renders it dynamically. Content updates are instant (no redeploy needed). See [references/gitee-api-content-site.md](references/gitee-api-content-site.md).
 
 **Do NOT use for:**
 - Deployment → use `edgeone-pages-deploy` skill
@@ -128,6 +129,7 @@ Need a project structure template?
 | Middleware (redirects, rewrites, auth guards, A/B testing) | [references/middleware.md](references/middleware.md) |
 | Project structure templates and common recipes | [references/recipes.md](references/recipes.md) |
 | Debugging and troubleshooting | [references/troubleshooting.md](references/troubleshooting.md) |
+| API-driven content site (Gitee as headless CMS) | [references/gitee-api-content-site.md](references/gitee-api-content-site.md) |
 
 ---
 

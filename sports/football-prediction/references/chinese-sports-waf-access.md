@@ -32,7 +32,7 @@ curl -s ... | iconv -f GBK -t UTF-8
   curl -s --connect-timeout 10 --max-time 20 \
     -H "User-Agent: Mozilla/5.0 ..." \
     -H "Referer: https://www.okooo.com/" \
-    "https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=2026-05-30" \
+    "https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=2026-01-29" \
     | iconv -f GBK -t UTF-8
   ```
 - **用途**：竞足开奖结果/赛果查询

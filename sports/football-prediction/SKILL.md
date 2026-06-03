@@ -51,6 +51,14 @@ version: 4.9.8
 - 逐场详情页（lotteryId=90）8Tab innerText采集
 - **文彩52强制交叉验证** → 见 references/ 已有文件
 
+#### 赛果数据源（复盘用）
+- **竞足赛果（首选）**：`https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=YYYY-MM-DD`（LotteryNo替换为目标日期）
+  - 需要 `User-Agent: Mozilla/5.0` + `Referer: https://www.okooo.com/` 头
+  - 编码: GBK → UTF-8 转码（`iconv -f GBK -t UTF-8`）
+  - `LotteryType` 可选：`SportteryScore`(比分)、`SportteryWDL`(让球胜平负)、`SportteryNWDL`(胜平负)
+- **竞足赛果（备用降级）**：59itou prize page `https://kt.59itou.com/jingcai/prize/`
+- **北单赛果**：`https://kt.59itou.com/danchang/prize/`（保持原有流程）
+
 #### 采集铁规
 - ✅ **逐场采集**：每次只处理1场比赛，采完1场再采下一场，严禁使用子任务/并行采集
 - ✅ **串行执行**：matchID获取→详情页数据→分析预测，每场完整走完再继续下一场
@@ -347,6 +355,7 @@ half_life = 6~10  # 按联赛类型
 | — | `references/review-findings-20260530.md` | **2026-05-29复盘数据**（挪超4b完全失效+友谊赛0-0规律+因子17验证） | 复盘 |
 | — | `references/review-findings-20260531.md` | **2026-05-30复盘数据**（芬超平局信号失效+瑞超4b降级+okooo数据源切换） | 复盘 |
 | — | `references/review-findings-20260601.md` | **2026-05-31复盘数据**（友谊赛弱队状态权重降级+顶级强队收兵系数上调） | 复盘 |
+| — | `references/review-findings-20260603.md` | **2026-06-02复盘数据**（友谊赛平降信号观测+强强对话收兵系数发现） | 复盘 |
 | 09 | `references/09-skillopt-training-cycle.md` | **SkillOpt训练循环** — 复盘→编辑→验证→拒绝 完整流程（编辑预算/验证门控/拒绝记账） | **每次复盘前必须加载** |
 | 10 | `references/10-rejected-edits-buffer.md` | **被拒绝编辑缓冲区** — 记录被验证门控否决的编辑方案和冷却期 | 提出新编辑提案前必须查询 |
 | 11 | `references/11-validation-report.md` | **验证集门控报告** — S_old vs S_new 完整记录 | 每次验证后追加记录 |
@@ -541,7 +550,7 @@ half_life = 6~10  # 按联赛类型
 
 | 版本 | 日期 | 变更 |
 |:----|:----|:-----|
-| v4.9.8 | 2026-06-02 | **国际友谊赛4b排除方向降级+6月1日复盘优化**：①01-factor-table.md新增因子4b失效条件「国际友谊赛」，新增完整分析章节含验证案例(1001保加利亚0-1黑山驱动)②analysis-framework.md §6.3新增国际友谊赛4b排除方向降级规则(P0→P2参考)+与挪超/瑞超降级对比表 ③SKILL.md铁律清单新增国际友谊赛4b排除方向降级规则④版本对齐(v4.9.6→v4.9.8) |
+| v4.9.10 | 2026-06-03 | **每日复盘·6月2日数据补充**：①新增review-findings-20260603.md记录3场友谊赛复盘数据 ②analysis-framework.md §6.4新增友谊赛平局降信号观测 ③analysis-framework.md §6.5新增友谊赛强强对话收兵系数误伤处理建议(λ×0.90代替×0.85) ④01-factor-table.md新增友谊赛平局降信号观测节 ⑤SKILL.md引用索引更新 |
 | v4.9.7 | 2026-06-01 | **每日复盘·5月31日数据补充**：①review-findings-20260601.md补充瑞超3场欧指信号深度分析（代格福什4b降级验证✅、赫根市场反转✅、韦斯特罗高方差触发✅）②国际友谊赛6场深盘穿盘率统计(75%) + 浅盘穿盘率(0%)规律记录 ③日职双平局规律补充 ④瑞超4b降级规则再次验证有效——因子12触发(15降主胜)但综合实力49-51均势→走平局 |
 | v4.9.6 | 2026-06-01 | **达尔文.skill 基线评估后优化（70.2→80+）**：①新增异常与边界条件结构化fallback表(4组14条) ②Step2.5/3.5/5.5加入🔴CHECKPOINT标记 ③新增反例与黑名单10条独立章节 ④v4.9.5复盘优化内容全部保留 |
 | v4.9.3 | 2026-05-31 | **批量预测模式+一气呵成规则**：①新增"附：批量预测模式"章节——当用户要求多个场次预测时，必须一口连续出完所有场次，禁止停等用户指令 ②定义批量格式模板（缩略版字段要求） ③定义批量优先级规则（联赛优先/强弱友谊赛简化/均衡友谊赛全量） ④跨批量一致性声明（同一批次禁止混用不同版本λ管线） ⑤本节驱动的源自用户反馈"为什么中断" |

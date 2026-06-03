@@ -1,0 +1,10 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+
+2026-06-01T09:53	baseline	football-prediction	-	70.2	baseline	-	初始基线评估	full_test
+
+2026-06-01T09:58	auto	football-prediction	70.2	79.8	keep	dim3+dim4+dim9	三项短板修复	full_test
+
+2026-06-01T10:03	auto	football-prediction	79.8	81.5	keep	dim5	输出示例+友谊赛清单可执行化	full_test
+
+2026-06-01T10:06	baseline	bjdc-prediction	-	60.8	baseline	-	初始基线评估	full_test
+

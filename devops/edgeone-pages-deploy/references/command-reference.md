@@ -57,3 +57,11 @@ edgeone pages link
 | Deploy new project | `edgeone pages deploy -n <name>` |
 | Deploy preview | `edgeone pages deploy -e preview` |
 | Deploy with token | `edgeone pages deploy -t <token>` |
+
+## General Tips — China Environment
+
+| Scenario | Tip |
+|----------|-----|
+| npm install times out | Use `--registry=https://registry.npmmirror.com` |
+| Gitee git push with token | Use `https://oauth2:TOKEN@gitee.com/owner/repo.git` (NOT `username:TOKEN@`) |
+| EdgeOne Pages + Gitee sync | If deploying an SPA that fetches content from Gitee API, push updated files to Gitee after each EdgeOne deployment to keep the source in sync |
