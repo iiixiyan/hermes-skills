@@ -2,7 +2,7 @@
 
 > **数学基础**：Bradley-Terry 配对比较 + Glicko-2 传递排名 — 以共同对手为标尺
 > 实战案例见 `references/bridge-method-examples.md`
-> 文彩52接入见 `references/wencai52-reference.md`
+> 文彩54接入见 `references/external-reference-wencai54.md`
 
 #### 核心思想
 
