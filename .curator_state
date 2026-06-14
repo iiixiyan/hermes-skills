@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/root/.hermes/logs/curator/20260531-085701",
-  "last_run_at": "2026-05-31T08:57:01.859800+00:00",
-  "last_run_duration_seconds": 85.129689,
-  "last_run_summary": "auto: no changes; llm: All scans complete. Here's the result of this consolidation pass.\n\n---\n\n## Curator Summary\n\n**Skills before pass:** 5 agent-created (agent-reach, data-collection-toolkit, feishu-lark-cli, markdown-doc-viewer, od-study-note)\n**Archived:** 1 …\narchived 1 skill(s):\n  • agent-reach → data-collection-toolkit\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin data-collection-toolkit",
+  "last_report_path": "/root/.hermes/logs/curator/20260607-091323",
+  "last_run_at": "2026-06-07T09:13:23.529653+00:00",
+  "last_run_duration_seconds": 81.04482,
+  "last_run_summary": "auto: no changes; llm: All 6 agent-created skills have been analyzed. Here's the complete consolidation result.\n\n---\n\n## Consolidation Summary\n\n**Cluster processed: Memory Provider (1 → 1)**\n\n| From | Into | Reason |\n|------|------|--------|\n| `tencentdb-memory` …\narchived 1 skill(s):\n  • tencentdb-memory → hermes-memory-provider-setup\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin hermes-memory-provider-setup",
   "last_run_summary_shown_at": null,
   "paused": false,
-  "run_count": 2
+  "run_count": 3
 }

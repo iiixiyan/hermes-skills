@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [GitHub, Repositories, Git, Releases, Secrets, Configuration]
-    related_skills: [github-auth, github-pr-workflow, github-issues]
+    related_skills: [github-auth, github-pr-workflow, github-issues, gitee-repo-management]
 ---
 
 # GitHub Repository Management
@@ -571,8 +571,10 @@ curl -s -X PATCH "https://gitee.com/api/v5/repos/$GITEE_USER/repo-name" \
 
 ### Pitfalls
 - **Empty repos cannot be made public.** Push at least one commit before setting `"private": false`.
-- **Token-in-URL requires username.** `https://TOKEN@gitee.com/...` fails. Must be `https://USERNAME:TOKEN@gitee.com/...`.
+- Token special chars in shell. When the token contains $, !, #, inline URL substitution fails. Use the git credential store method: printf 'https://oauth2:%s@gitee.com\n' "$GITEE_TOKEN" > /tmp/creds && git config credential.helper 'store --file /tmp/creds' && rm -f /tmp/creds.
 - **Gitee API auth header** is `Authorization: token TOKEN` (same format as GitHub, no `Bearer` prefix).
 - **Gitee PATCH requires "name" field.** Gitee's PATCH /repos/{owner}/{repo} returns `"name is missing"` if the `name` field isn't included, even when you're only changing visibility.
 - **Empty repo cannot be public.** Gitee returns `"空仓库不支持设置为公开仓库"` when trying to set an empty repo to public. Push code first, then toggle visibility.
-- **Gitee API base** is `https://gitee.com/api/v5`, not `api.github.com`.
+- Gitee API base is https://gitee.com/api/v5, not api.github.com.
+
+> 💡 See the gitee-repo-management skill for detailed Gitee-specific workflows: creating repos from scratch, visibility management, push with credential store, and Gitee API cheatsheet.

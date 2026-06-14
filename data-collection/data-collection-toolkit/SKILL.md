@@ -158,6 +158,22 @@ Agent Reach 提供 16+ 个互联网内容渠道的访问能力。本环境已安
 | `agent-reach configure groq-key gsk_xxx` | 配置小宇宙播客转录 Key |
 | `agent-reach configure xhs-cookies "..."` | 配置小红书 Cookie |
 
+### CSDN 博客表格解析
+
+CSDN 博客经常包含结构化表格数据（如题库、排行榜等）。使用 curl + 移动端 UA + 正则提取 `<table>`→`<tr>`→`<td>` 结构，可批量解析。
+
+**核心步骤**：获取HTML → 提取 `id="article_content"` → 正则提取所有 `<table>` → 解析每行 `<td>` → 清理HTML实体和标签。
+
+详见 `references/csdn-blog-table-parsing.md`。
+
+### CSDN 文章内容提取（含付费墙绕过）
+
+当需要获取CSDN文章的**问题描述/题目原文**（而非表格数据）时，使用 `references/csdn-article-extraction.md` 中提供的函数。
+
+**适用场景**：文章有付费墙但问题描述在付费墙前，只需提取题目描述+输入输出格式+示例（不计费部分）。解题代码和完整题解在付费墙后不可得。
+
+**与表格解析的区别**：`csdn-blog-table-parsing.md` 提取表格结构化数据；`csdn-article-extraction.md` 提取文章文本内容（带代码块保护）。
+
 ### 各渠道详细用法
 
 #### 网页读取（Jina Reader）
