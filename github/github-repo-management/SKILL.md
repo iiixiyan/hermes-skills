@@ -186,6 +186,8 @@ curl -s -X PUT -H "Authorization: Bearer *** \"$SHA\" ] && echo ,\\\"sha\\\":\\\
 
 **Limitations:** Individual files only (≤ 1 MB each). For many files, fix the HTTPS transport or switch to SSH.
 
+**Bulk push (Trees API, 100+ files):** Use `scripts/github-push-via-trees-api.py` instead. It creates blobs in parallel, builds the tree in chunks of 100, creates a single commit, and updates the ref — all via API. Suitable for 638 files in ~10 API calls.
+
 **Before resorting to API, try:**
 ```bash
 git config http.postBuffer 524288000
@@ -589,12 +591,14 @@ for g in json.load(sys.stdin):
 | List workflows | `gh workflow list` | `curl GET /repos/o/r/actions/workflows` |
 | Rerun CI | `gh run rerun ID` | `curl POST /repos/o/r/actions/runs/ID/rerun` |
 | Set secret | `gh secret set KEY` | `curl PUT /repos/o/r/actions/secrets/KEY` (+ encryption) |
-| Push file (API) | — | `curl PUT /repos/o/r/contents/path` (§Pitfalls) |
+| Push file (API, single) | — | `curl PUT /repos/o/r/contents/path` (§Pitfalls) |
+| Push dir (API, bulk) | — | `scripts/github-push-via-trees-api.py` (§Pitfalls: Trees API) |
 | Browse data UI | — | `references/data-browser-page-pattern.md` (incl. coding Q-bank 3-tab variant) |
 
 ## Related Skill References
 
 - `github-auth` — authentication setup (tokens, SSH, gh CLI login)\n- `github-pr-workflow` — PR lifecycle (branch, commit, open, CI, merge)\n- `gitee-repo-management` — Gitee-specific mirroring and workflows\n- `references/data-browser-page-pattern.md` — building searchable/filterable single-page data viewers from static JSON (good for published datasets on GitHub Pages)\n- `references/react-data-viewer-pattern.md` — React/TS/Vite/antd approach for rich data viewers with routing, localStorage state, and GitHub Actions CI/CD
+- `scripts/github-push-via-trees-api.py` — push entire directories to GitHub via Git Trees API (bulk fallback when git push stalls)
 
 ## 11. Cross-Platform Mirroring (GitHub → Gitee)
 
