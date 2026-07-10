@@ -135,6 +135,9 @@ lambda_h, lambda_a, reasons = apply_league_adjustments(
 
 ## 四、复盘铁则
 
+### 赛后赛果验证 — match3详情页速查法（2026-07-10新增）
+复盘时优先使用 match3 详情页获取实际比分：`browser_navigate` 到 `https://kt.59itou.com/{prefix}/match3/?matchid={match_id}&lotteryId=90&lottery_style=jczq`，比分直接从 page banner 的 StaticText 读取。无需 prize page 复杂DOM解析。详见 `references/match-result-verification.md`。
+
 ### 数据源优先级（⚠️ P0 — 2026-07-08复盘发现）
 
 复盘时必须用实际**DELIVERED的预测数据**, 不能只用cron输出文件!
