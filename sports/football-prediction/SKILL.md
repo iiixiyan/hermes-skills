@@ -1,10 +1,10 @@
 ---
 name: football-prediction
 description: '竞彩足球比分预测 — 世界杯/联赛/杯赛通用。v10.35含F38-F46(10场100%方向+100%双选覆盖+60%精确)。联赛引擎含F29-F46+双模评分器+欧冠4b弱化+R16均势平局+极端反转豁免+R16精英3-1注入+欧冠首回合弱队进球+欧罗巴弱队客场进球+核心伤停λ修正+欧战客胜分歧。输出固定双选比分+单选比分。'
-version: 10.35
+version: 10.36
 ---
 
-# 竞彩足球比分预测（v10.35）
+# 竞彩足球比分预测（v10.36）
 > **🏆 v10.35** 双选比分+单选比分 | 7/9(周四)4场100%方向+100%双选覆盖+25%精确 | **F44欧联弱队客场进球/F45世界杯核心伤停λ修正/F46欧战客胜分歧信号** | F29-F43规则链保持 | refs/prediction-workflow.md
 
 > Level 1 路由文档。细节见 references/。
@@ -243,7 +243,59 @@ lambda_h, lambda_a, reasons = apply_league_adjustments(
 - ⚠️ **联赛r2_high平局预警(因子25)：** r2≥30+c2≤10+排名差≤2→平局λ×1.15(上限40%)
 - ⚠️ **所有预测后需覆盖保存到 predictions 文件**
 
-## 五、更新日志
+## 六、文件维护规则
+
+每次版本更新时必须执行清理，禁止积累旧版文件。**本条为强约束，不遵守会导致目录膨胀至150+文件，降低引擎可维护性。** 参考 `references/file-cleanup-checklist.md` 了解完整方法论。
+
+### 系统性清理检查（每次版本升级后必做）
+
+1. **SKILL.md交叉引用** — grep SKILL.md 看哪些 refs/ scripts/ 被实际引用。未被引用的文件标记为候选删除。
+2. **脚本依赖链检查** — `grep -rl "module_name" *.py` 确认脚本是否被其他活跃脚本导入。孤立脚本（无人import、SKILL.md不引用）→ 删除候选。
+3. **版本号差距扫描** — `ls references/v10.*.md` 检查版本号。与当前版本差距 >10 个版本的旧回测报告 → 可删。
+4. **重复内容比较** — `diff` 对比文件名相似的脚本（如 `league-predict.py` vs `league-predict-v2.1.py`）。md5相同 = 精准重复；subset差异 = 旧版可删。
+5. **review-findings 时效性修剪** — 只保留最近14天的复盘记录。更早的每日复盘中沉淀的规则已进入 F因子表。
+
+### 必须删除的旧版痕迹
+
+| 文件类型 | 示例 | 删除时机 |
+|---------|------|---------|
+| `SKILL.md.backup-v*` | `SKILL.md.backup-v7` | 版本号变更后立即删除 |
+| `_archived/` 目录 | 旧版worldcup预测脚本 | 每个大版本(vX.0+)升级后清空 |
+| `references/v6.*` / `v7.*` | 旧迭代回测日志 | 超过3个版本号差距（当前v10→v6可删） |
+| `references/v10.8.*` ~ `v10.19.*` | 版本号差距>16的回测报告 | 版本号差距>10即可删除 |
+| `scripts/*-v[旧版号].py` | `league-predict-v2.py`, `league-predict-v2.1.py` | 同名脚本有新版（如 `league-predict.py` v2.1）稳定后删除旧版 |
+| `scripts/*_predict.py` (下划线) | `league_predict.py`, `prediction_tracker.py` | 有同名连字符版（`league-predict.py`, `prediction-tracker.py`）且md5相同→删除 |
+| `scripts/worldcup-full-backtest*.py` | v2/v3/v8d | 旧回测脚本，引擎自带回测已替代 |
+| `scripts/automated_*.py` | automated_all/l2/l3 | 旧自动化集群，已集成入主管线 |
+| `scripts/freeze_testset.py` | — | 固定测试集 (用户声明"100%是过拟合") |
+| `__pycache__/` | .pyc编译缓存 | 每次预测前清理，避免脏缓存 |
+| `references/worldcup-full-scoring-v[旧版].md` | v2/v3/v8 | 已有更新版本(v9+)覆盖后删除 |
+| `references/review-findings-202606*.md` | 6月复盘 | 只保留最近14天，更早的删除 |
+| `references/v10.engine-*.md` | v10-engine-diagnostic, iteration, fundamentals | 方法论已合并入SKILL.md §二 |
+| `references/[0-9][0-9]-*.md`（编号文件） | 01-factor-table, 05-bridge-method | 未被SKILL.md引用且已过时→删除 |
+
+### 保留的参照文件
+
+以下类型保留不删：
+- **回测日志**：`references/backtest-v10.23-log.md`（保留最近1-2个版本的完整回测）
+- **引擎方法论**：`v10.35-engine-state.md`（当前版本状态记录）
+- **F因子文档**：`v10.29*.md` 及以上（含规则设计理由，版本号差距≤10）
+- **数据源文档**：`sina-api-*.md`、`sporttery-api.md`（独立于版本）
+- **leagues配置**：`references/leagues/*.md`（联赛参数，持续使用）
+- **流程文档**：`references/prediction-workflow.md`、`league-prediction-flow.md`（SKILL.md显式引用）
+
+### 判断标准
+
+> 文件能否在当前版本(v10.35)的流程中被引用到？
+> 能→保留；不能→删除后观察2轮预测无异常则确认删除合法。
+
+> **新增辅助判断**：
+> - 如文件名含旧版本号（v10.8/v10.9/v10.10/v10.11/v10.17/v10.18/v10.19）→ 自动标记为旧版
+> - 如文件名含`old`/`backup`/`archive`/`v1`/`v2`（非当前版）→ 标记为旧版
+> - 如文件名是`number-topic.md`格式且不被SKILL.md引用 → 标记为旧版
+> - 如review-findings日期超过14天 → 标记为过期
+
+## 七、更新日志
 
 | 版本 | 日期 | 变更 |
 |:----|:----|:------|
