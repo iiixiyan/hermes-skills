@@ -138,6 +138,8 @@ lambda_h, lambda_a, reasons = apply_league_adjustments(
 
 **此技能仅用于竞彩足球（竞足）分析，不适用于北单。**
 
+**系统评测**: 使用 skill-creator eval 工作流进行基准测试，见 `references/eval-methodology.md`（3测试用例+15条断言，基线93.3%通过率）。
+
 | 维度 | 竞足 → football-prediction | 北单 → bjdc-prediction |
 |:----|:--------------------------|:-----------------------|
 | 输出内容 | 比分预测（λ计算、xG模型、双选比分） | 北单选项（让胜/让平/让负） |

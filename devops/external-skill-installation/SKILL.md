@@ -156,8 +156,11 @@ This also works for repos behind CloudWAF that returns "This is not the web page
 ## Git Clone Fallback (Any Git Host)
 
 Use `git clone` when the host's web/API layer is blocked (e.g. GitCode WAF,
-rate-limited GitHub API) or when the repo has many skills with subdirectory
-files and individual downloads are impractical:
+rate-limited GitHub API, or `raw.githubusercontent.com` / `api.github.com`
+timing out) or when the repo has many skills with subdirectory files and
+individual downloads are impractical. **`git` protocol often works even when
+HTTP raw content and API both time out** — observed on servers where HTTP(S)
+outbound to GitHub is throttled or firewalled but `git` HTTPS passes.
 
 ```bash
 git clone --depth 1 https://gitcode.com/user/repo.git /tmp/repo
@@ -168,9 +171,14 @@ cp -r /tmp/repo/skill-name ~/.hermes/skills/skill-name
 rm -rf /tmp/repo
 ```
 
-**Pitfall**: Always use `--depth 1` (shallow clone) to avoid timeouts on
-large repos. For GitCode specifically, see §GitCode (CN Mirrors) above for
-known WAF behavior.
+**Pitfalls**:
+- Always use `--depth 1` (shallow clone) to avoid timeouts on large repos.
+- On some servers `git push` completes on the remote even when the client
+  reports a timeout — check with `git log --oneline origin/main` and
+  `Everything up-to-date` afterward rather than treating the timeout as a
+  failure.
+- For GitCode specifically, see §GitCode (CN Mirrors) above for known WAF
+  behavior.
 
 ## Verifying Installation
 
