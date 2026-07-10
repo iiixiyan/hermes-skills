@@ -51,8 +51,10 @@
 
 ### 2.1 导航到竞彩足球列表页
 
-```
-browser_navigate(url='https://kt.59itou.com/455/jingcai/')
+```javascript
+// ⚠️ 站号数字（如455、223）可能变化，从列表页URL自动获取
+browser_navigate(url='https://kt.59itou.com/jingcai/')
+// 进入详情页后站号可从URL提取：const station = location.pathname.split('/')[1];
 ```
 
 ### 2.2 展开目标日期Tab
@@ -142,27 +144,37 @@ for(var i=0; i<tabs.length; i++) {
 // 等待500ms后提取
 ```
 
-#### 方式B：URL参数直接跳转（当点击无效时的替代方案）
+#### 方式B：URL参数直接跳转（推荐用于首次进入详情页）
 
-**实验发现：VanUI的Tab点击在某些页面加载后可能不生效。** 此时直接用URL参数导航更可靠：
+**2026-06-17验证：59itou详情页URL格式为 `https://kt.59itou.com/{station}/match3/?current_tab={tab}&matchid={match_id2}&lotteryId=90`**
+
+其中：
+- `{station}` = 站号，从列表页URL的pathname自动提取（如223、455）
+- `{match_id2}` = 59itou API返回的 `match_id2` 字段（如2589461、2680453）
+- `lotteryId=90` = 竞足（固定）
 
 ```javascript
-// 参数映射
-// history=战绩, odds=欧指, handicap=亚指, lineup=阵容, rank=排名, info=情报
-
-window.location.href = window.location.href.replace(/current_tab=\w+/, 'current_tab=handicap');
+// 从零构建详情页URL进入（无需先加载列表页）
+const station = location.pathname.split('/')[1] || '223';
+const matchId2 = '2680453';  // 从59itou API获取
+const tab = 'odds';  // history|odds|handicap|lineup|info|rank
+window.location.href = `https://kt.59itou.com/${station}/match3/?current_tab=${tab}&matchid=${matchId2}&lotteryId=90`;
 ```
 
 参数速查：
 
-| Tab名 | current_tab值 |
-|:-----|:------------|
-| 战绩 | history |
-| 欧指 | odds |
-| 亚指 | handicap |
-| 阵容 | lineup |
-| 情报 | info |
-| 排名 | rank |
+| Tab名 | current_tab值 | 用途 |
+|:-----|:------------|:-----|
+| 战绩 | history | 近10场/H2H/赛程/综合实力（默认） |
+| 欧指 | odds | 百家平均+指数变化+各公司赔率 |
+| 亚指 | handicap | 盘口+水位+升降盘统计 |
+| 阵容 | lineup | 首发/阵型/替补+伤停 |
+| 情报 | info | 伤停/新闻（可能为空） |
+| 排名 | rank | 积分榜/状态特征 |
+
+**特点对比**：
+- 方式A（JS点击）：适合已在详情页时切换Tab
+- 方式B（URL直接）：适合首次进入详情页，更可靠，且无需依赖JS事件绑定
 
 ### 3.3 战绩Tab（默认加载）
 
@@ -343,9 +355,31 @@ for(var i=0; i<tabs.length; i++) {
 
 ## 七、赛果数据获取（复盘用）
 
-复盘需要获取实际赛果时，**不要使用59itou prize页面**（数据不完整+证书问题）。
+复盘需要获取实际赛果时，按以下优先级：
 
-**首选：澳客(okooo)开奖结果页面**
+**🥇 首选：竞彩官方API（2026-06-17验证可用）**
+
+```bash
+curl -s 'https://webapi.sporttery.cn/gateway/uniform/fb/getMatchDataPageListV1.qry?method=result&pageSize=20&matchBeginDate=YYYY-MM-DD&matchEndDate=YYYY-MM-DD' \
+  -H 'User-Agent: Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36' \
+  -H 'Referer: https://webapi.sporttery.cn/' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: zh-CN,zh;q=0.9' \
+  -H 'Origin: https://webapi.sporttery.cn'
+```
+
+**优点**：纯净JSON（GBK或UTF-8），包含半全场比分、matchStatus（11=已完成）
+**⚠️ 注意**：必须带完整5个浏览器头，缺一触发EdgeOne WAF返回HTTP 567
+
+**🥈 备选：新浪API带dpc=1**
+
+```bash
+curl -s 'https://mix.lottery.sina.com.cn/gateway/index/entry?format=json&__caller__=wap&__version__=1.0.0&__verno__=10000&cat1=jczqMatches&gameTypes=spf&date=YYYY-MM-DD&isAll=1&dpc=1'
+```
+
+返回SP开奖+赛果，但可能有延迟（赛果数据当日无法立即获取）
+
+**🥉 兜底：澳客(okooo)开奖结果页面**
 ```
 URL:    https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=YYYY-MM-DD
 例:     https://vxbf.okooo.com/kaijiang/sport.php?LotteryType=SportteryScore&LotteryNo=2026-05-30

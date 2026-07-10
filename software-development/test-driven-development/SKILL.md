@@ -23,6 +23,85 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 ## When to Use
 
+**Use when:** Tuning a rule-chain engine with a large test suite (50+ cases) where each case is a known input-output pair.
+
+**Context:** Rule-chain engines (predictive models, scoring systems, decision trees) have dozens of interlocking rules. Writing a test for every rule is impractical. Instead, maintain a **full backtest suite** — a file listing every known case with its input parameters and expected output.
+
+### The Cycle
+
+**Phase 0 — Establish Baseline:**
+```
+Full backtest → record accuracy %
+```
+
+**Phase 1 — Find a Single Deviation:**
+```
+Full backtest → find first deviation ≥ threshold → isolate root cause
+```
+
+**Phase 2 — Make Minimal Fix:**
+```
+One change to ONE rule → no "while I'm here" fixes
+```
+
+**Phase 3 — Verify Fix + Guard Regression:**
+```
+Full backtest → check deviation is resolved → confirm no NEW deviations introduced
+```
+
+**Phase 4 — Repeat:**
+```
+Back to Phase 1 until all deviations resolved
+```
+
+### Key Rules
+
+1. **One fix per iteration.** Never change two rules at once — you won't know which one did what.
+2. **Full backtest after every fix.** Not just the fixed case — every fix must run the ENTIRE suite.
+3. **Record regressions immediately.** A fix that fixes one case but breaks three others is not a fix.
+4. **Prefer tightening conditions over relaxing them.** Adding a new condition (narrowing a rule's scope) is safer than removing one (widening it).
+5. **When a fix regresses, don't keep it.** Roll back, re-analyze, try a different approach.
+6. **Document each deviation's root cause** before coding a fix. If you can't explain WHY, you can't fix.
+
+### Implementation Pattern
+
+```python
+# 1. Build a test suite (at module scope)
+MATCHES = [
+    (match_id, home, away, expected_h, expected_a, round, fh, fa, match_num),
+    ...
+]
+
+# 2. Create a runner that:
+#    - Loads the current engine
+#    - Fetches independent input data (fresh API)
+#    - Runs each case through the engine
+#    - Compares with expected output
+#    - Reports: pass/fail, deviation magnitude, rule chain used
+
+# 3. Iterate: read output → find first deviation → fix engine → re-run
+
+# 4. Track progress:
+#    baseline: 75% → after fix 1: 80% → after fix 2: 88% → ... → 100%
+```
+
+### Common Pitfalls
+
+| Pitfall | Why It Hurts | Fix |
+|---------|-------------|-----|
+| Multiple fixes per iteration | Can't isolate cause-effect | One change, re-run full suite |
+| Only checking the fixed case | New regressions slip through | Full suite every iteration |
+| Over-engineering a rule for one case | Creates regressions in others | Minimal fix, tighten conditions |
+| Using stale (post-match) data | Data encodes the answer, not the question | Fresh API pull per run |
+| Not recording the baseline | Can't prove improvement | Baseline % documented before starting |
+
+### When to Use
+
+- Rule-chain engines with 20+ rules
+- Predictive models where test cases are known input-output pairs
+- Any system where a full-regression test takes < 5 minutes
+## When to Use
+
 **Always:**
 - New features
 - Bug fixes
@@ -35,6 +114,8 @@ Write the test first. Watch it fail. Write minimal code to pass.
 - Configuration files
 
 Thinking "skip TDD just this once"? Stop. That's rationalization.
+
+## TDD Variant: Regression-Driven Development (Rule Chains)
 
 ## The Iron Law
 

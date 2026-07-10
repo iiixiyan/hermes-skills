@@ -1,6 +1,6 @@
 ---
 name: data-collection-toolkit
-description: "数据采集工具链选型框架：四件套优先级策略。当需要在网上获取数据时，按此框架选择最优工具，而非随机尝试。"
+description: "数据采集工具链选型框架：四件套优先级策略 + 足球API速查。当需要在网上获取数据时，按此框架选择最优工具，而非随机尝试。"
 tags: ["web-scraping", "data-acquisition", "tool-priority"]
 related_skills:
   - autocli-skill
@@ -10,6 +10,21 @@ related_skills:
 ---
 
 # 数据采集工具链选型框架
+
+## 快速集成指南（L1/L2/L3方法论 — 2026-06-20更新：L2/L3已全自动）
+
+当采集的数据将用于 **预测/分析管线** 时，需跟踪数据源的**集成状态**以防「文档写了但代码没用」：
+
+| 级别 | 标记 | 含义 | 数据源示例 |
+|:----|:----|:------|:----------|
+| **L1-自动** | ✅ | 采集代码在主管线中硬编码调用，每次运行自动采集注入引擎 | 新浪API欧赔8参数 + 59itou API综合实力分 |
+| **L2-自动** | ✅ | Playwright浏览器全自动采集，`--browser`标志启用，无需人工干预 | titan007分析页 → 天气/评分/伤停/杯赛排名/H2H |
+| **L3-自动** | ✅ | Playwright浏览器全自动采集，`--browser`标志启用，仅对当前/未来比赛有效 | 500彩票网shuju页 → FIFA3期/阵容/澳门心水/战绩 |
+| **L3-待检** | ⏳ | 采集逻辑就绪但未在大批量数据上验证鲁棒性，或数据源不稳定 | 天天盈球(服务器500错误) |
+
+> **Playwright自动化要点**：使用 Playwright Sync API + 系统Chromium(`/usr/bin/chromium-browser`)。初始化：`p.start()`（**不要用** `p.__enter__()`）。清理：`p.stop()`。
+>
+> 详见 `football-prediction` skill 的 `Phase D` 章节和 `scripts/automated_l*.py`。
 
 ## 用户工具链四件套
 
@@ -21,6 +36,27 @@ related_skills:
 | **2️⃣** | **AutoCLI (autocli)** | 55+平台CLI，复用Chrome登录态 | "我的内线——读取各大平台内容，关键是能复用Chrome登录态" | 需要登录的平台（微博/知乎/B站/推特/小红书等） |
 | **3️⃣** | **Agent-Reach** | YouTube字幕/GitHub/RSS/Exa搜索 | "我的采集技能包——把YouTube字幕、GitHub、RSS等能力打包给Agent" | 视频转文字、GitHub仓库、RSS订阅、语义搜索 |
 | **4️⃣** | **bb-browser** | 浏览器即API，直接控浏览器 | "理念很狠：Your browser is the API——很多网站没有API，但浏览器已经能看，让Agent直接控制浏览器去读、去点" | 以上三件套都不支持的特殊网站、需交互操作的页面 |
+
+## 数据源发现铁律
+
+### 当用户要求"找数据源/网站/接口"时
+
+必须**主动搜索+测试大量候选站点**（20个以上），不要仅依赖已知列表。理由：
+
+```text
+❌ 错误做法：
+   "我知道10个足球网站：1、2、3..." ← 只列已知的，很多已关站/反爬
+
+✅ 正确做法：
+   1. 先列出所有已知候选（20+个）
+   2. 用curl批量测试连通性（HTTP状态码）
+   3. 用浏览器深入检查有数据的站点（看是否有欧赔/亚盘/大小球）
+   4. 排除已关站/反爬的
+   5. 按可用性分梯队展示
+   6. 给出最优组合推荐
+```
+
+**用户两次纠正过这个问题："我的意思是你多找找能用的网站进行对比！！"** 意味着"多找找"和"进行对比"都是必须的，不是可选项。
 
 ### 工具切换检验标准
 
@@ -54,11 +90,26 @@ related_skills:
 - ✅ 一字不改，原文呈现
 - ✅ 用于足球数据的 59itou 采集特别强调此规则
 
+### Trafilatura 中文编码注意
+
+Trafilatura 提取中文内容时，**必须传 `resp.content`（原始字节）而非 `resp.text`（已解码字符串）**，否则中文会双编码乱码。
+
+详见 `references/trafilatura-encoding-fix.md`。
+
 ### 平台覆盖参考
 
 | 平台 | 推荐工具 | 备注 |
 |:----|:--------|:-----|
-| 59itou（足球数据） | Playwright+Chromium（手动） | 6Tab全采集，lotteryId区分北单(45)/竞足(90) |
+| 59itou（足球数据·详情页） | 浏览器(Playwright) + URL参数 | **8Tab全采集**。URL格式：`/{station}/match3/?current_tab={tab}&matchid={match_id2}&lotteryId=90`<br>Tab参数：`lineup`(阵容) `info`(情报) `history`(战绩+H2H) `rank`(排名) `odds`(欧指) `handicap`(亚指)<br>lotteryId区分北单(45)/竞足(90)。仅用于阵容/伤停/H2H等API无法覆盖的数据<br>📎 批量采集策略（Prize page matchID提取+delegate_task并行）详见 `references/beidan-batch-review-workflow.md` |
+| 59itou隐藏API（足球列表+排名） | **curl REST JSON** | **`apic.jindianle.com/api/match/selectlist`**。直接返回比赛列表+SP赔率+**FIFA排名**+让球数。无需浏览器。详见 `references/59itou-hidden-api.md` |
+| **新浪竞彩API（足球欧赔/亚盘/赛果）** | **curl REST JSON** | **`mix.lottery.sina.com.cn`**。`cat1=jczqMatches` 得竞彩SP全玩法（⚠️ 2026-06-19 响应格式变化：`result.data` 现在是list而非dict）；`cat1=footballMatchOddsEuro` 得**53家欧赔**初即赔；`cat1=footballMatchOddsAsia` 得**17家亚盘**盘口+水位；`cat1=footballMatchOddsEuroChange` 得欧赔变化时间序列（155条+）；`cat1=footballMatchDetail` 得比赛详情(排名/天气/轮次)。纯净JSON，无防盗链。详见 `references/football-apis.md` |
+| **竞彩官方API（官方SPF/赛果）** | **curl REST JSON** | **`webapi.sporttery.cn/gateway/uniform/fb/`**。`method=concern` 得赛程SPF赔率(h=主胜/d=平/a=客胜)；`method=result` 得赛果（含半全场比分）。**需要UA+Referer头绕过WAF**（详见 `references/football-apis.md §二`）。⚠️ **2026-06-19验证：curl仍被EdgeOne WAF拦截(403)**，需要通过Playwright浏览器访问。 |
+| **天天盈球（足球基本面/伤停/阵容）** | **浏览器导航+console提取** | **`www.ttyingqiu.com/live/zq/matchDetail/info/{matchId}`**。往期日期通过左箭头(<-)回退。可用 `browser_console(expression='document.body.innerText')` 全文提取。含：首发阵容+阵型+球员评分+身价、伤停信息+伤停解读、球队有利/不利因素分析、精选情报(战术/天气/赛程)。无Cloudflare反爬。详见 `references/ttyingqiu-data-source.md`（在football-prediction skill下）。⚠️ 2026-06-19 返回500错误，可能不稳定。 |
+| **500彩票网（赔率对比·百家欧赔/亚盘/大小）** | **Playwright自动采集(automated_l3.py)** | **`odds.500.com/fenxi/shuju-{id}.shtml`**。**100+家**赔率公司百家欧赔+亚盘对比+大小指数+波胆+走势图。Playwright全自动：从首页赛程→匹配队名→ID(13592xx)→shuju页→FIFA3期/阵容/伤病/澳门心水/近期战绩/未来赛程/主客场战绩→form_signal。**⚠️仅当前/未来比赛有效**(已完赛返回"暂无数据")。详见 `football-prediction/scripts/automated_l3.py`。 |
+| **球探体育（足球资料库·分析页面）** | **Playwright自动采集(automated_l2.py)** | **`info.titan007.com/analysis/{analysisId}cn.htm`**。Playwright全自动：导航→提取innerText→解析天气/评分/伤停/杯赛排名/H2H/场均进球→form_signal。分析ID范围：首轮世界杯在2906740-2906809。详见 `football-prediction/scripts/automated_l2.py`。 |
+| **雷速体育（赛事直播·资料库）** | **浏览器导航+console提取** | **`www.leisu.com`**。体育直播+资料库+赛事情报。Vue store数据需从console提取。`data.leisu.com` 子域返回405。详见 `references/football-odds-sites-comparison.md`。 |
+| **澳客网（足球赛事数据·赔率分析）** | **Playwright自动采集(automated_l3.py)** | **`www.okooo.com/soccer/match/{id}/odds/`**。Playwright全自动：从世界杯赛程页(`/soccer/league/16/schedule/`)→匹配队名→matchId(131xxxx)→提取身价(两队总€)/积分榜→form_signal。详见 `football-prediction/scripts/automated_l3.py`。 |
+| **中国竞彩网（官方SP赔率·赛果）** | **浏览器导航** | **`www.sporttery.cn`**。官方竞彩SP/赛果。EdgeOne WAF保护，curl直接访问403。详见 `references/football-odds-sites-comparison.md`。 |
 | 微博热搜/搜索 | autocli weibo | 无需登录即可用公共模式 |
 | B站热门/搜索 | autocli bilibili | 公共模式可用 |
 | 知乎热榜/搜索 | autocli zhihu | 公共模式可用 |

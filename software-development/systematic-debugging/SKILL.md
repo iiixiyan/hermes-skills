@@ -87,6 +87,22 @@ pytest tests/test_module.py::test_name -v
 pytest tests/test_module.py -v --tb=long
 ```
 
+**Browser crashes with empty error messages:** When a web app shows a JS exception with no message text, it's likely a cross-origin error suppression (the `<script crossorigin>` attribute without matching CORS headers). Capture actual error details via:
+
+```js
+// Add to console on working page, then navigate to broken route
+window.herr = [];
+window.onerror = function(msg, url, line, col, err) {
+  window.herr.push({msg, url, line, col, stack: err?.stack});
+};
+window.addEventListener('unhandledrejection', function(e) {
+  window.herr.push({reason: e.reason?.stack || e.reason?.message});
+});
+// Then check: window.herr
+```
+
+React error numbers (e.g. #310 = "rendered more hooks than previous render") can be looked up at `https://react.dev/errors/{number}`.
+
 ### 3. Check Recent Changes
 
 - What changed that could cause this?

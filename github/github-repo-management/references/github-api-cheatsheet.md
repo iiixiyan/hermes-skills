@@ -127,6 +127,34 @@ Most list endpoints support:
 - `?page=2` for next page
 - Check `Link` header for `rel="next"` URL
 
+## GitHub Pages
+
+| Action | Method | Endpoint | Notes |
+|--------|--------|----------|-------|
+| Enable Pages | POST | `/repos/{owner}/{repo}/pages` | Body: `{"source": {"branch": "master", "path": "/"}}` |
+| Get Pages status | GET | `/repos/{owner}/{repo}/pages` | Returns `html_url`, `status` (built/building), `source` |
+| Update Pages | PUT | `/repos/{owner}/{repo}/pages` | Same body as POST, for changing branch/path |
+
+When creating Pages, the `source.branch` must match the default branch. If the repo was just created and has no commits yet, push at least one file first, then enable Pages. The response includes the `html_url` — the public URL is always `https://{owner}.github.io/{repo}/`.
+
+**Python — enable Pages after first push:**
+```python
+req = urllib.request.Request(f"https://api.github.com/repos/{OWNER}/{REPO}/pages",
+    data=json.dumps({"source": {"branch": "master", "path": "/"}}).encode(),
+    method="POST")
+req.add_header("Authorization", f"Bearer {TOKEN}")
+req.add_header("Content-Type", "application/json")
+with urllib.request.urlopen(req, timeout=15) as resp:
+    print(f"Pages URL: {json.loads(resp.read().decode())['html_url']}")
+```
+
+**Shell — enable Pages via curl:**
+```bash
+curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" \
+  "https://api.github.com/repos/$OWNER/$REPO/pages" \
+  -d '{"source": {"branch": "master", "path": "/"}}'
+```
+
 ## Rate Limits
 
 - Authenticated: 5,000 requests/hour

@@ -52,6 +52,24 @@ subprocess.run(["git", "-C", LEARN_DIR, "push", "github", "master"],
 **优势：** 完全自动化，无需手动配置。
 **劣势：** 每次都要加 remote（或持久化配置），多一步推送耗时。
 
+### ⚠️ GitHub Token (GITHUB_TOKEN)
+
+已在 `~/.hermes/.env` 中配置了 `GITHUB_TOKEN=github_pat_...`（93字符的Fine-grained PAT），拥有 `repo` 权限，可用于：
+- GitHub API 调用（创建仓库、启用Pages等）
+- HTTPS git 推送（`https://oauth2:{token}@github.com/{user}/{repo}.git`）
+- GitHub Pages 管理
+
+读token方式：
+```python
+import re
+with open("/root/.hermes/.env") as f:
+    env = f.read()
+m = re.search(r'GITHUB_TOKEN=*** env)
+token = m.group(1).strip("'\"")
+```
+
+---
+
 ## 当前状态
 
-2026-05-28 状态：方案A未配置（需手动网页操作），方案B未集成。目前仅推送到 Gitee。
+2026-07-07 状态：方案A未配置（需手动网页操作），方案B未集成。目前仅推送到 Gitee。

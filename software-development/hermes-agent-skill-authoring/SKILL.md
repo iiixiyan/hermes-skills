@@ -357,6 +357,96 @@ The paper *SkillOpt: Making Agent Skills Optimizable* (Microsoft Research, 2025)
 4. **Reference file mismatch.** The data workflow in `references/*.md` may describe steps or signals that no longer match the SKILL.md. Patch references symmetrically.
 5. **Over-patching.** If a single edit touches 10+ scattered locations, consider `skill_manage(action='edit')` with the full new content instead of 10 separate patches. Patches are surgical; edits are sweeping.
 
+## Emergency SKILL.md Recovery
+
+When a SKILL.md is accidentally truncated or overwritten (e.g., `write_file` only wrote the frontmatter, erasing the rest), follow this recovery procedure.
+
+**⚠️ Recovery tool restriction:** in restricted-tool contexts (e.g., archival review loops) where only `skill_manage` and `memory` are available, you CANNOT use `terminal`/`read_file`/`write_file`/`patch` directly. In such cases, save the lost content as `skill_manage(action='write_file', name='<skill>', file_path='references/recovery-notes.md')` reference files under the damaged skill, and alert the user that a tool-unrestricted session is needed for actual file restoration.
+
+### Step 1: Check Available Backups
+
+| Source | How to check | Recovery method |
+|:-------|:-------------|:----------------|
+| Session history (current session) | `session_search(query='SKILL.md write_file')` — find the truncation event | Look for patch commands BEFORE the write_file — those show what content existed |
+| Session history (prior sessions) | `session_search(query='<skill-name> SKILL.md')` — find earlier versions | Extract content from tool responses (patch diffs, read_file outputs) |
+| User-provided cloud backup | Ask the user if they have a copy (Tencent Docs, Gist, Pastebin, email) | `browser_navigate(url)` + `browser_console(expression='document.body.innerText')` to extract |
+| Cron output directory | `~/.hermes/cron/output/<job_id>/` — if the skill was used by a cron job | The cron output may include embedded skill content at the top of the output file |
+| Git repository (skills dir) | `cd ~/.hermes/skills && git log --oneline -- <skill-path>/SKILL.md` | `git checkout -- <skill-path>/SKILL.md` for HEAD, or `git show <commit>:<skill-path>/SKILL.md > temp.md` for an older commit. Also check `git stash list` for WIP saves |
+| Reference files reconstruction | If SKILL.md is gone but `references/` + `scripts/` survive, the methodology can be rebuilt from consolidated reference files (e.g. `references/v*-hardening-scheme.md`) plus the update log entries in any partial backup | Read each reference file → extract key upgrade descriptions → rebuild SKILL.md sections from those descriptions |
+| Manual backup | `ls ~/.hermes/skills/<category>/<name>/SKILL.md.bak` or `*~` | Direct `cp` restore |
+
+### Step 2: Extract Content from Tencent Docs (most common backup source)
+
+When the user provides a Tencent Docs link containing the SKILL.md content:
+
+```text
+# Navigate to the document
+browser_navigate(url)
+
+# Extract the full text — Tencent Docs renders everything in innerText
+browser_console(expression='document.body.innerText')
+
+# The result contains the full content including tables, code blocks, and formatting.
+# Tables will use tab-separators, code blocks will lose language markers.
+# This is acceptable for restoration.
+```
+
+### Step 3: Reconstruct the SKILL.md (preferred method)
+
+For files over 50KB, the most reliable approach is **build the full file in `/tmp/` via chunked `write_file`, then `cp` to the final path**:
+
+```text
+# 1. Write each section as a separate temp file (write_file handles smaller content fine)
+write_file(path='/tmp/skill_part1.md', content='---\\nname: ...\\nversion: ...\\n---\\n\\n...section one content...')
+write_file(path='/tmp/skill_part2.md', content='...section two content...')
+write_file(path='/tmp/skill_partN.md', content='...section N content...')
+
+# 2. Concatenate into a complete file via terminal
+terminal('cat /tmp/skill_part1.md /tmp/skill_part2.md /tmp/skill_partN.md > /tmp/skill_complete.md')
+
+# 3. Copy to the skill directory (cp is a raw byte copy, no truncation risk)
+terminal('cp /tmp/skill_complete.md <skill>/SKILL.md')
+```
+
+**Why this is better than `write_file` for the final write:**
+- `write_file` can silently **truncate** large content (observed: only ~1200 bytes written for an 87KB file). If you pass more content than its buffer handles, the excess is silently discarded.
+- `write_file` does NOT raise an error on truncation — you won't know the file is damaged until you check the size.
+- `skill_manage(action='edit')` also has a `content` parameter with potential size limits.
+- `terminal('cp ...')` is a raw byte copy — it preserves the full content exactly.
+
+**Do NOT use this terminal-write approach:**
+```bash
+cat > SKILL.md << 'EOF'
+...content...
+EOF
+```
+→ Long markdown with backticks and special chars causes escaping issues. Build in temp files instead.
+
+### Step 4: Verify Restoration
+
+```text
+# Check total size matches expectations
+terminal('wc -l -c <skill>/SKILL.md')
+
+# Verify frontmatter loads correctly
+skill_view(name='<skill>')
+
+# Check end of file (update log should be intact)
+terminal('tail -5 <skill>/SKILL.md')
+
+# Spot-check key sections
+terminal('head -20 <skill>/SKILL.md')  # frontmatter
+grep -n '^## ' <skill>/SKILL.md       # section structure
+```
+
+### Prevention
+
+- **Back up before editing**: `cp SKILL.md SKILL.md.bak` before structural changes
+- **Use `patch` not `write_file`** for targeted frontmatter edits — `patch` preserves the rest of the file
+- **Check git first**: before asking the user for a backup, run `cd ~/.hermes/skills && git log --oneline -- <path>` to see if the skill is version-controlled. `git checkout` is the fastest recovery path
+- **Keep a cloud copy** of large mission-critical skills (120KB+) in Tencent Docs or a Gist
+- **Heed the guard warning**: the system says *"was last read with offset/limit pagination (partial view)"* — this means your write will destroy unseen content
+
 ## Common Pitfalls
 
 1. **Using `skill_manage(action='create')` for an in-repo skill.** It writes to `~/.hermes/skills/`, not the repo tree. Use `write_file` for in-repo creation.
@@ -372,6 +462,12 @@ The paper *SkillOpt: Making Agent Skills Optimizable* (Microsoft Research, 2025)
 6. **Expecting the current session to see the new skill.** It won't. The skill loader is initialized at session start. Verify in a fresh session or via `skill_view` using the exact path.
 
 7. **Linking to skills that don't exist in-repo.** `related_skills: [some-user-local-skill]` works for you but breaks for other clones. Prefer only in-repo links.
+
+8. **Using `write_file` to "fix" frontmatter on a large SKILL.md.** `write_file` OVERWRITES the entire file — if you only pass the frontmatter, the rest of the file is erased. This is how SKILL.md truncation accidents happen. Always use `patch` (find-and-replace) for targeted frontmatter edits. If you must use `write_file`, first read the full file with `read_file(path, offset=1, limit=9999)` to confirm its total size, then construct the full content including everything that should survive.
+
+9. **Reading a large SKILL.md with offset/limit pagination then writing back.** The system warns: *"was last read with offset/limit pagination (partial view). Re-read the whole file before overwriting it."* This is a critical guard. Before any `write_file` on a skill file, call `read_file(path, offset=1, limit=<total_lines>)` to get the full view, or accept that you're about to destroy unseen content.
+
+11. **Sibling subagent conflict — `write_file` silently overwrites.** When a skill file carries a warning *"was modified by sibling subagent... after this agent's last read"*, `patch` detects and rejects stale reads, but `write_file` does not check and will silently destroy the sibling's changes. Always re-read via `skill_view()` before any `write_file` on a skill that a sibling may have touched.
 
 ## Verification Checklist
 

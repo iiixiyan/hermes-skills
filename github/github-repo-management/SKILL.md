@@ -138,6 +138,62 @@ curl -s -X POST \
   -d '{"name": "my-new-project", "private": false}'
 ```
 
+### ⚠️ Pitfall: `git push` over HTTPS times out (GitHub API fallback)
+
+When `git push` over HTTPS times out repeatedly — even with `http.postBuffer` tuning — but `curl` to `api.github.com` works fine, use the **GitHub Contents API** to push individual files directly. This is a reliable fallback when git's HTTP transport stalls.
+
+**Symptoms:** `git push origin main` times out (30s/60s/120s) with empty output, stalling at `Trying 20.205.243.166:443...` — but `curl https://api.github.com` responds normally.
+
+**Fix — push via Contents API (Python):**
+
+```python
+import json, base64, urllib.request
+
+TOKEN="<your_gh...NER, REPO = "owner", "repo"
+
+def get_sha(path):
+    try:
+        req = urllib.request.Request(f"https://api.github.com/repos/{OWNER}/{REPO}/contents/{path}")
+        req.add_header("Authorization", f"Bearer {TOKEN}")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read().decode()).get("sha")
+    except: return None
+
+def push_file(path, content, msg):
+    sha = get_sha(path)
+    data = {"message": msg, "content": base64.b64encode(content.encode()).decode()}
+    if sha: data["sha"] = sha
+    req = urllib.request.Request(f"https://api.github.com/repos/{OWNER}/{REPO}/contents/{path}",
+                                 data=json.dumps(data).encode(), method="PUT")
+    req.add_header("Authorization", f"Bearer {TOKEN}")
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read().decode())
+
+push_file("index.html", html_content, "Update page")
+push_file("data.json", json_content, "Update data")
+```
+
+**Shell version (single file):**
+```bash
+BASE64=$(base64 -w0 file.json)
+SHA=$(curl -s -H "Authorization: Bearer *** \
+  "https://api.github.com/repos/$OWNER/$REPO/contents/file.json" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sha',''))")
+curl -s -X PUT -H "Authorization: Bearer *** \"$SHA\" ] && echo ,\\\"sha\\\":\\\"$SHA\\\"\" }" \
+  "https://api.github.com/repos/$OWNER/$REPO/contents/file.json" \
+  -d "{\"message\":\"Update file\",\"content\":\"$BASE64\"}"
+```
+
+**Limitations:** Individual files only (≤ 1 MB each). For many files, fix the HTTPS transport or switch to SSH.
+
+**Before resorting to API, try:**
+```bash
+git config http.postBuffer 524288000
+git config http.lowSpeedLimit 1000
+git config http.lowSpeedTime 60
+git remote set-url origin git@github.com:owner/repo.git  # SSH fallback
+```
+
 ### ⚠️ Pitfall: Embedded `.git` directories in source directories
 
 When pushing an existing directory that contains **nested git repositories** (e.g. syncing `~/.hermes/skills/` where individual skill dirs were created by `skill_manage` and may have their own `.git/`), `git add -A` will silently register them as **git submodules (gitlinks, mode 160000)** instead of tracking their contents. The outer repo will contain only a pointer, not the actual files.
@@ -533,8 +589,136 @@ for g in json.load(sys.stdin):
 | List workflows | `gh workflow list` | `curl GET /repos/o/r/actions/workflows` |
 | Rerun CI | `gh run rerun ID` | `curl POST /repos/o/r/actions/runs/ID/rerun` |
 | Set secret | `gh secret set KEY` | `curl PUT /repos/o/r/actions/secrets/KEY` (+ encryption) |
+| Push file (API) | — | `curl PUT /repos/o/r/contents/path` (§Pitfalls) |
+| Browse data UI | — | `references/data-browser-page-pattern.md` (incl. coding Q-bank 3-tab variant) |
+
+## Related Skill References
+
+- `github-auth` — authentication setup (tokens, SSH, gh CLI login)\n- `github-pr-workflow` — PR lifecycle (branch, commit, open, CI, merge)\n- `gitee-repo-management` — Gitee-specific mirroring and workflows\n- `references/data-browser-page-pattern.md` — building searchable/filterable single-page data viewers from static JSON (good for published datasets on GitHub Pages)\n- `references/react-data-viewer-pattern.md` — React/TS/Vite/antd approach for rich data viewers with routing, localStorage state, and GitHub Actions CI/CD
 
 ## 11. Cross-Platform Mirroring (GitHub → Gitee)
+
+## 12. Multi-Remote Sync (Generic: Platform A → GitHub)
+
+Clone from any git platform (GitCode, Gitee, GitLab, Bitbucket, self-hosted) → process → push to a new GitHub repo.
+
+### Workflow
+
+```bash
+# 1. Clone from source platform
+# Format: https://oauth2:TOKEN@gitcode.com/owner/repo.git
+git clone https://oauth2:$SOURCE_TOKEN@gitcode.com/owner/repo.git /tmp/workdir
+cd /tmp/workdir
+
+# 2. (Optional) Process data — transform, merge, generate files
+python3 process.py
+
+# 3. Create GitHub repo (if not exists)
+curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+  https://api.github.com/user/repos \
+  -d '{"name": "'"$REPO_NAME"'", "private": false}'
+
+# 4. Init new git and push to GitHub
+cd /tmp/workdir/pages  # or wherever the output files are
+git init
+git add -A
+git commit -m "Sync from source"
+git remote add origin https://oauth2:$GITHUB_TOKEN@github.com/$OWNER/$REPO_NAME.git
+git branch -M main
+git push -u origin main
+
+# 5. Enable GitHub Pages
+curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/$OWNER/$REPO_NAME/pages" \
+  -d '{"source": {"branch": "main", "path": "/"}}'
+```
+
+### Full Python Automation (self-contained)
+
+When git push over HTTPS times out but the GitHub API works, use the Contents API instead:
+
+```python
+import json, base64, urllib.request, subprocess, os, re
+
+# Get tokens
+with open(os.path.expanduser('~/.git-credentials')) as f:
+    creds = f.read()
+gh_token = re.search(r'https://oauth2:([^@]+)@github\.com', creds).group(1)
+source_token = re.search(r'https://oauth2:([^@]+)@gitcode\.com', creds).group(1)
+
+# Clone from source
+WORK = "/tmp/workdir"
+if os.path.exists(WORK): subprocess.run(['rm', '-rf', WORK])
+subprocess.run(['git', 'clone',
+    f'https://oauth2:{source_token}@gitcode.com/owner/repo.git',
+    f'{WORK}/source'], timeout=30)
+
+# Process data (e.g. merge JSON, generate HTML)
+# ... your transformation here ...
+
+# Create GitHub repo
+req = urllib.request.Request(
+    f"https://api.github.com/user/repos",
+    data=json.dumps({"name": REPO_NAME, "private": False}).encode(),
+    method="POST")
+req.add_header("Authorization", f"Bearer {gh_token}")
+req.add_header("Content-Type", "application/json")
+urllib.request.urlopen(req, timeout=15)
+
+# Push files via Contents API
+def push_file(path, content, msg):
+    sha = None
+    try:
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{OWNER}/{REPO_NAME}/contents/{path}")
+        req.add_header("Authorization", f"Bearer {gh_token}")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            sha = json.loads(resp.read().decode()).get("sha")
+    except: pass
+    data = {"message": msg, "content": base64.b64encode(content.encode()).decode()}
+    if sha: data["sha"] = sha
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{OWNER}/{REPO_NAME}/contents/{path}",
+        data=json.dumps(data).encode(), method="PUT")
+    req.add_header("Authorization", f"Bearer {gh_token}")
+    req.add_header("Content-Type", "application/json")
+    urllib.request.urlopen(req, timeout=30)
+    print(f"  {path}: pushed")
+
+push_file("index.html", html_content, "Add page")
+push_file("data.json", json_content, "Add data")
+
+# Enable Pages
+req = urllib.request.Request(
+    f"https://api.github.com/repos/{OWNER}/{REPO_NAME}/pages",
+    data=json.dumps({"source": {"branch": "master", "path": "/"}}).encode(),
+    method="POST")
+req.add_header("Authorization", f"Bearer {gh_token}")
+req.add_header("Content-Type", "application/json")
+urllib.request.urlopen(req, timeout=15)
+```
+
+### Pitfalls
+
+- **Git clone from Chinese platforms may need tokens in URL format** `https://oauth2:TOKEN@domain.com/owner/repo.git` (not `Bearer` header, not `Authorization: token`).
+- **Empty repos cannot enable Pages.** Push at least one commit first.
+- **When `git push` stalls,** fall back to Contents API (individual files, ≤ 1 MB each).
+- **Clean up `/tmp`** after sync if sensitive data was cloned there.
+- **Git push over HTTPS fails** with `Invalid username or token` — this means the token is not accepted in the standard `https://TOKEN@github.com` format. The working format for token auth is `https://oauth2:${GH_TOKEN}@github.com/user/repo.git`. Use:
+  ```bash
+  git remote set-url origin "https://oauth2:${GH_TOKEN}@github.com/<user>/<repo>.git"
+  git push origin master
+  ```
+  Environment variables `GH_TOKEN` and `GITHUB_TOKEN` may both be present — if one fails, try the other. The `oauth2:` prefix is specifically needed for GitHub's HTTPS auth when using a personal access token (both classic and fine-grained).
+
+### Use Cases
+
+| Source | Token Source | Clone URL Pattern |
+|--------|-------------|-------------------|
+| GitCode | `~/.git-credentials` (gitcode.com) | `https://oauth2:${TOKEN}@gitcode.com/owner/repo.git` |
+| Gitee | `~/.git-credentials` (gitee.com) | `https://oauth2:${TOKEN}@gitee.com/owner/repo.git` |
+| GitLab | personal access token | `https://oauth2:${TOKEN}@gitlab.com/owner/repo.git` |
+| GitHub (fork→own) | `~/.git-credentials` | `https://oauth2:${TOKEN}@github.com/owner/repo.git` |
 
 When copying a GitHub repo to Gitee (Chinese git platform), account for these differences:
 

@@ -7,3 +7,14 @@ Thumbs.db
 
 # Ignore hub cache
 .hub/
+
+# Ignore usage tracking
+.usage.json
+.usage.json.lock
+.bundled_manifest
+.curator_state
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo

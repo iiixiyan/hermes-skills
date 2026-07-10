@@ -24,7 +24,17 @@ LEAGUE_RHO = {
 }
 
 def get_rho(league: str) -> float:
-    """获取联赛Dixon-Coles修正系数"""
+    """获取联赛Dixon-Coles修正系数 — league_config优先"""
+    # 尝试从league_config加载
+    try:
+        from league_config import load_league
+        config = load_league(league)
+        if config and 'dc_rho' in config:
+            return config['dc_rho']
+    except (ImportError, Exception):
+        pass
+    
+    # 兜底: 内置硬编码
     for key, val in LEAGUE_RHO.items():
         if key in league:
             return val
@@ -223,7 +233,17 @@ LEAGUE_PRIORS = {
 
 
 def get_league_prior(league: str) -> Tuple[float, float]:
-    """获取联赛先验: (场均进球, 先验权重)"""
+    """获取联赛先验: (场均进球, 先验权重) — league_config优先"""
+    # 尝试从league_config加载
+    try:
+        from league_config import load_league
+        config = load_league(league)
+        if config and 'lambda_baseline' in config and 'prior_weight' in config:
+            return (config['lambda_baseline'], config['prior_weight'])
+    except (ImportError, Exception):
+        pass
+    
+    # 兜底: 内置硬编码
     for key, val in LEAGUE_PRIORS.items():
         if key in league:
             return val

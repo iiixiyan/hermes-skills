@@ -1,0 +1,3 @@
+数据文件太大，请在首次使用时执行:
+curl -sL --max-time 60 "https://ghproxy.net/https://raw.githubusercontent.com/yangxb919/lottery-data/main/data/ssq.json" -o /tmp/ssq_data.json
+python3 -c "import json; d=json.load(open('/tmp/ssq_data.json')); print(f'已加载 {len(d)} 期数据')"
